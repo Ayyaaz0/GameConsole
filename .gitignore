@@ -7,3 +7,5 @@ mx.scratch
 .vscode/
 .clangd
 .metadata/
+.project
+.cproject
