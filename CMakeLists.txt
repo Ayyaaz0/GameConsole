@@ -1,10 +1,9 @@
 cmake_minimum_required(VERSION 3.22)
 
 #
-# This file is generated only once,
-# and is not re-generated if converter is called multiple times.
-#
-# User is free to modify the file as much as necessary
+# Refactor-friendly CMakeLists for GameConsole
+# During active restructuring, this auto-discovers source/include paths
+# inside platform/, shared/, game_1/, game_2/, game_3/, and games/.
 #
 
 # Setup compiler settings
@@ -12,99 +11,96 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-
 # Define the build type
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
 # Core project settings
-project(Unit_4_1_Menu_Template)
+project(GameConsole)
 
-# Enable compile command to ease indexing with e.g. clangd
+# Enable compile commands for clangd etc.
 set(CMAKE_EXPORT_COMPILE_COMMANDS TRUE)
-message("Build type: " ${CMAKE_BUILD_TYPE})
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
-# Enable CMake support for ASM and C languages
+# Enable C and ASM
 enable_language(C ASM)
 
-# Create an executable object type
+# Create executable target
 add_executable(${CMAKE_PROJECT_NAME})
 
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
-# Link directories setup
-target_link_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined library search paths
+# -----------------------------
+# Auto-discover user source files
+# -----------------------------
+file(GLOB_RECURSE USER_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/platform/*.c"
+    "${CMAKE_SOURCE_DIR}/shared/*.c"
+    "${CMAKE_SOURCE_DIR}/game_1/*.c"
+    "${CMAKE_SOURCE_DIR}/game_2/*.c"
+    "${CMAKE_SOURCE_DIR}/game_3/*.c"
+    "${CMAKE_SOURCE_DIR}/games/*.c"
 )
 
-# Add sources to executable
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
-    # LCD and basic drivers
-    ${CMAKE_SOURCE_DIR}/ST7789V2_Driver_STM32L4/Core/Src/LCD.c
-    ${CMAKE_SOURCE_DIR}/ST7789V2_Driver_STM32L4/Core/Src/ST7789V2_Driver.c
-    
-    # Input and output drivers
-    ${CMAKE_SOURCE_DIR}/Joystick/Joystick.c
-    ${CMAKE_SOURCE_DIR}/Buzzer/Buzzer.c
-    ${CMAKE_SOURCE_DIR}/PWM/PWM.c
-    
-    # Menu system (shared)
-    ${CMAKE_SOURCE_DIR}/shared/Menu.c
-    ${CMAKE_SOURCE_DIR}/shared/InputHandler.c
-    
-    # Game implementations (placeholder - students implement these)
-    ${CMAKE_SOURCE_DIR}/game_1/Game_1.c
-    ${CMAKE_SOURCE_DIR}/game_2/Game_2.c
-    ${CMAKE_SOURCE_DIR}/game_3/Game_3.c
+    ${USER_SOURCES}
 )
 
-# Add include paths
+# -----------------------------
+# Auto-discover include directories
+# -----------------------------
+set(USER_INCLUDE_DIRS
+    "${CMAKE_SOURCE_DIR}"
+)
+
+function(collect_include_dirs base_dir)
+    if(EXISTS "${base_dir}")
+        file(GLOB_RECURSE found_headers CONFIGURE_DEPENDS
+            "${base_dir}/*.h"
+        )
+        foreach(header ${found_headers})
+            get_filename_component(header_dir "${header}" DIRECTORY)
+            list(APPEND USER_INCLUDE_DIRS "${header_dir}")
+        endforeach()
+        set(USER_INCLUDE_DIRS "${USER_INCLUDE_DIRS}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+collect_include_dirs("${CMAKE_SOURCE_DIR}/platform")
+collect_include_dirs("${CMAKE_SOURCE_DIR}/shared")
+collect_include_dirs("${CMAKE_SOURCE_DIR}/game_1")
+collect_include_dirs("${CMAKE_SOURCE_DIR}/game_2")
+collect_include_dirs("${CMAKE_SOURCE_DIR}/game_3")
+collect_include_dirs("${CMAKE_SOURCE_DIR}/games")
+
+list(REMOVE_DUPLICATES USER_INCLUDE_DIRS)
+
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE
-    # Core
-    ${CMAKE_SOURCE_DIR}
-    
-    # Drivers
-    ${CMAKE_SOURCE_DIR}/ST7789V2_Driver_STM32L4/Core/Inc
-    ${CMAKE_SOURCE_DIR}/Joystick
-    ${CMAKE_SOURCE_DIR}/Buzzer
-    ${CMAKE_SOURCE_DIR}/PWM
-    
-    # Menu system and shared utilities
-    ${CMAKE_SOURCE_DIR}/shared
-    
-    # Game implementations
-    ${CMAKE_SOURCE_DIR}/game_1
-    ${CMAKE_SOURCE_DIR}/game_2
-    ${CMAKE_SOURCE_DIR}/game_3
+    ${USER_INCLUDE_DIRS}
 )
 
 # Add project symbols (macros)
 target_compile_definitions(${CMAKE_PROJECT_NAME} PRIVATE
-    # Add user defined symbols
+    # Add user-defined symbols here if needed
 )
 
-# Remove wrong libob.a library dependency when using cpp files
+# Remove wrong libob.a dependency when using some toolchains
 list(REMOVE_ITEM CMAKE_C_IMPLICIT_LINK_LIBRARIES ob)
 
-# Add linked libraries
+# Link libraries
 target_link_libraries(${CMAKE_PROJECT_NAME}
     stm32cubemx
-
-    # Add user defined libraries
 )
 
-# Enable floating point printf/scanf support
-# Note: This adds ~7-10KB to the binary size (ROM), but the STM32L476 has 1MB flash
-# so this is not a concern. The main constraint for the projects is the 128KB RAM.
+# Enable floating point printf
 target_link_options(${CMAKE_PROJECT_NAME} PRIVATE
     -u _printf_float
     #-u _scanf_float
 )
 
-
-# Create .bin from the ELF using the toolchain objcopy
+# Create .bin from ELF
 add_custom_command(TARGET ${CMAKE_PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_OBJCOPY} -O binary
         $<TARGET_FILE:${CMAKE_PROJECT_NAME}>
