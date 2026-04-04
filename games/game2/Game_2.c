@@ -12,22 +12,16 @@
 extern ST7789V2_cfg_t cfg0;
 extern Buzzer_cfg_t buzzer_cfg;
 
-/*
- * Game 2 state
- */
+//game state variables
 static uint32_t animation_counter = 0;
 static int16_t moving_y = 0;
 static int8_t move_direction = 1;
 static bool game2_exit_requested = false;
 
-/*
- * Frame timing target for Game 2
- */
+//frame timing (50ms = 20 FPS)
 #define GAME2_FRAME_TIME_MS 50
 
-/*
- * Internal game functions
- */
+//internal functions for game lifecycle
 static void game2_init(void) {
   animation_counter = 0;
   moving_y = 0;
