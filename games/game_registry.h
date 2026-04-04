@@ -3,7 +3,7 @@
 
 #include "game_api.h"
 
-extern const GameApi* game_list[];
+extern const GameApi *game_list[];
 extern const int game_count;
 
 #endif
