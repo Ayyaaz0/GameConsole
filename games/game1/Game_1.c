@@ -98,19 +98,12 @@ const GameApi game1_api = {
     .exit = game1_exit
 };
 
-
-
-MenuState Game1_Run(void)
-{
-    game1_api.init();
-
-    while (!Game1_ShouldExit())
-    {
-        game1_api.update();
-        game1_api.render();
-    }
-
-    game1_api.exit();
-
-    return MENU_STATE_HOME;
+MenuState Game1_Run(void) {
+  game1_api.init();
+  while (!Game1_ShouldExit()) {
+    game1_api.update();
+    game1_api.render();
+  }
+  game1_api.exit();
+  return MENU_STATE_HOME;
 }

@@ -1,21 +1,13 @@
 #ifndef GAME_2_H
 #define GAME_2_H
 
+#include <stdbool.h>
+#include "game_api.h"
 #include "Menu.h"
 
-/**
- * @brief Game 2 - Student can implement their own game here
- * 
- * Placeholder for Student 2's game implementation.
- * This structure allows multiple students to work on separate games
- * while sharing common utilities from the shared/ folder.
- * 
- * The menu system calls this function when Game 2 is selected.
- * The function runs its own loop and returns when the game exits.
- * 
- * @return MenuState - Where to go next (typically MENU_STATE_HOME for menu)
- */
+extern const GameApi game2_api;
 
+bool Game2_ShouldExit(void);
 MenuState Game2_Run(void);
 
-#endif // GAME_2_H
+#endif
