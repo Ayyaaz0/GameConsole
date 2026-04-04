@@ -14,22 +14,16 @@ extern ST7789V2_cfg_t cfg0;
 extern PWM_cfg_t pwm_cfg;
 extern Buzzer_cfg_t buzzer_cfg;
 
-/*
- * Game 1 state
- */
+//game state variables
 static uint32_t animation_counter = 0;
 static int16_t moving_x = 0;
 static int8_t move_direction = 1;
 static bool game1_exit_requested = false;
 
-/*
- * Frame timing target for Game 1
- */
+//frame timing (30ms = ~33 FPS)
 #define GAME1_FRAME_TIME_MS 30
 
-/*
- * Internal game functions
- */
+//internal functions for game lifecycle
 static void game1_init(void) {
   animation_counter = 0;
   moving_x = 0;
@@ -40,6 +34,7 @@ static void game1_init(void) {
   HAL_Delay(50);
   buzzer_off(&buzzer_cfg);
 }
+
 
 static void game1_update(void) {
   Input_Read();
