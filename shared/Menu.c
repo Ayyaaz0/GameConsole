@@ -7,7 +7,6 @@
 #include "stm32l4xx_hal.h"
 
 #include <stdint.h>
-#include <stdio.h>
 
 extern ST7789V2_cfg_t cfg0;
 extern Joystick_cfg_t joystick_cfg;
@@ -15,7 +14,7 @@ extern Joystick_t joystick_data;
 
 #define MENU_FRAME_TIME_MS 30
 
-// Render the home menu with dynamic game list and highlight the selected option
+// Render the home menu using the registered game list
 static void render_home_menu(MenuSystem *menu) {
   LCD_Fill_Buffer(0);
   LCD_printString("MAIN MENU", 50, 10, 1, 3);
@@ -38,7 +37,7 @@ static void render_home_menu(MenuSystem *menu) {
 // Initialize menu system: set selected option to the first game
 void Menu_Init(MenuSystem *menu) { menu->selected_option = 0; }
 
-// Main menu loop: handles input, updates selected option, and renders menu until a game is selected
+// Run the menu loop until the user selects a game, then return its index
 int Menu_Run(MenuSystem *menu) {
   static Direction last_direction = CENTRE;
   int selected_game_index = 0;
