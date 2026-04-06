@@ -1,59 +1,49 @@
 #include "Game_1.h"
+
 #include "Buzzer.h"
 #include "InputHandler.h"
 #include "LCD.h"
 #include "PWM.h"
 #include "stm32l4xx_hal.h"
+
 #include <stdbool.h>
 #include <stdio.h>
-
-// Temporary include
-#include "Menu.h"
 
 extern ST7789V2_cfg_t cfg0;
 extern PWM_cfg_t pwm_cfg;
 extern Buzzer_cfg_t buzzer_cfg;
 
-//game state variables
 static uint32_t animation_counter = 0;
 static int16_t moving_x = 0;
 static int8_t move_direction = 1;
-static bool game1_exit_requested = false;
+static bool game1_shutdown_requested = false;
 
-//frame timing (30ms = ~33 FPS)
-#define GAME1_FRAME_TIME_MS 30
-
-//internal functions for game lifecycle
 static void game1_init(void) {
-  animation_counter = 0;
-  moving_x = 0;
-  move_direction = 1;
-  game1_exit_requested = false;
+    animation_counter = 0;
+    moving_x = 0;
+    move_direction = 1;
+    game1_shutdown_requested = false; 
 
-  buzzer_tone(&buzzer_cfg, 1000, 30);
-  HAL_Delay(50);
-  buzzer_off(&buzzer_cfg);
+    buzzer_tone(&buzzer_cfg, 1000, 30); // Play a tone to indicate game start
+    HAL_Delay(50);
+    buzzer_off(&buzzer_cfg);
 }
 
-
 static void game1_update(void) {
-  Input_Read();
+    Input_Read();
+    if (current_input.btn3_pressed) {
+        PWM_SetDuty(&pwm_cfg,50); 
+        game1_shutdown_requested = true;
+        return;
+    }
+    animation_counter++;
 
-  if (current_input.btn3_pressed) {
-    PWM_SetDuty(&pwm_cfg, 50);
-    game1_exit_requested = true;
-    return;
-  }
+    if (moving_x >= 200 || moving_x <= 0) {
+        move_direction *= -1; 
+    }
 
-  animation_counter++;
-
-  moving_x += move_direction * 3;
-  if (moving_x >= 200 || moving_x <= 0) {
-    move_direction *= -1;
-  }
-
-  uint8_t brightness = (moving_x * 100) / 200;
-  PWM_SetDuty(&pwm_cfg, brightness);
+    uint8_t brightness = (moving_x * 100) / 200;
+    PWM_SetDuty(&pwm_cfg, brightness);  
 }
 
 static void game1_render(void) {
@@ -79,26 +69,15 @@ static void game1_render(void) {
   LCD_Refresh(&cfg0);
 }
 
-static void game1_exit(void) { PWM_SetDuty(&pwm_cfg, 50); }
+static void game1_shutdown(void) { PWM_SetDuty(&pwm_cfg, 50); }
 
-bool Game1_ShouldExit(void) {
-    return game1_exit_requested;
-}
+bool Game1_ShouldExit(void) { return game1_shutdown_requested; }
 
 const GameApi game1_api = {
     .name = "Game 1",
     .init = game1_init,
     .update = game1_update,
     .render = game1_render,
-    .exit = game1_exit
+    .shutdown = game1_shutdown,
+    .should_exit = Game1_ShouldExit,
 };
-
-MenuState Game1_Run(void) {
-  game1_api.init();
-  while (!Game1_ShouldExit()) {
-    game1_api.update();
-    game1_api.render();
-  }
-  game1_api.exit();
-  return MENU_STATE_HOME;
-}
