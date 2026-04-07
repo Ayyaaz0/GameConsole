@@ -15,7 +15,7 @@ extern ST7789V2_cfg_t cfg0;
 #define GAME1_BOX_Y 100
 #define GAME1_BOX_MIN_X 0
 #define GAME1_BOX_MAX_X 200
-#define GAME1_BOX_STEP 3
+#define GAME1_BOX_STEP 1
 
 static uint32_t animation_counter = 0;
 static int16_t moving_x = 0;
@@ -60,15 +60,20 @@ static void game1_update(void) {
     }
 }
 
-static void game1_render(void)
-{
+static void game1_render(void) {
     uint32_t start = HAL_GetTick();
     static uint32_t total_render_time = 0;
     static uint32_t sample_count = 0;
 
-    LCD_Fill_Buffer(0);
-    LCD_printString("Game 1: Moving Box", 20, 20, 1, 2);
+    // Erase old box position
+    LCD_Draw_Rect(20 + prev_x,
+                  GAME1_BOX_Y,
+                  GAME1_BOX_WIDTH,
+                  GAME1_BOX_HEIGHT,
+                  0,
+                  1);
 
+    // Draw new box position
     LCD_Draw_Rect(20 + moving_x,
                   GAME1_BOX_Y,
                   GAME1_BOX_WIDTH,
@@ -83,11 +88,12 @@ static void game1_render(void)
     sample_count++;
 
     if (sample_count == 60) {
-        printf("Average render time: %lu ms\n", total_render_time / 60);
+        printf("Dirty redraw avg: %lu ms\n", total_render_time / 60);
         total_render_time = 0;
         sample_count = 0;
     }
 }
+
 
 static void game1_shutdown(void) {
     // Optional: clear screen when exiting
