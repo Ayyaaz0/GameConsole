@@ -15,7 +15,7 @@ extern ST7789V2_cfg_t cfg0;
 #define GAME1_BOX_Y 100
 #define GAME1_BOX_MIN_X 0
 #define GAME1_BOX_MAX_X 200
-#define GAME1_BOX_STEP 1
+#define GAME1_BOX_STEP 2
 
 static uint32_t animation_counter = 0;
 static int16_t moving_x = 0;
@@ -65,8 +65,19 @@ static void game1_render(void) {
     static uint32_t total_render_time = 0;
     static uint32_t sample_count = 0;
 
+    uint16_t old_left = 20 + prev_x;
+    uint16_t new_left = 20 + moving_x;
+
+    uint16_t x0 = (old_left < new_left) ? old_left : new_left;
+    uint16_t old_right = old_left + GAME1_BOX_WIDTH - 1;
+    uint16_t new_right = new_left + GAME1_BOX_WIDTH - 1;
+    uint16_t x1 = (old_right > new_right) ? old_right : new_right;
+
+    uint16_t y0 = GAME1_BOX_Y;
+    uint16_t y1 = GAME1_BOX_Y + GAME1_BOX_HEIGHT - 1;
+
     // Erase old box position
-    LCD_Draw_Rect(20 + prev_x,
+    LCD_Draw_Rect(old_left,
                   GAME1_BOX_Y,
                   GAME1_BOX_WIDTH,
                   GAME1_BOX_HEIGHT,
@@ -74,21 +85,22 @@ static void game1_render(void) {
                   1);
 
     // Draw new box position
-    LCD_Draw_Rect(20 + moving_x,
+    LCD_Draw_Rect(new_left,
                   GAME1_BOX_Y,
                   GAME1_BOX_WIDTH,
                   GAME1_BOX_HEIGHT,
                   1,
                   1);
 
-    LCD_Refresh(&cfg0);
+    // Refresh only the area that changed
+    LCD_Refresh_Area(&cfg0, x0, y0, x1, y1);
 
     uint32_t render_time = HAL_GetTick() - start;
     total_render_time += render_time;
     sample_count++;
 
     if (sample_count == 60) {
-        printf("Dirty redraw avg: %lu ms\n", total_render_time / 60);
+        printf("Area redraw avg: %lu ms\n", total_render_time / 60);
         total_render_time = 0;
         sample_count = 0;
     }

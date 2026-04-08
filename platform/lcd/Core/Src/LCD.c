@@ -1,5 +1,9 @@
 #include "LCD.h"
+#include "ST7789V2_Driver.h"
+#include "stm32l4xx_hal.h"
+#include <stdint.h>
 
+#define SPI_TIMEOUT_MS 100
 
 // Image buffer storing pixel data, 4 pixels per byte (2 bits per pixel)
 static uint8_t image_buffer[BUFFER_LENGTH];
@@ -227,6 +231,54 @@ void LCD_Refresh(ST7789V2_cfg_t* cfg) {
       ST7789V2_Send_Command(cfg, 0x2C);
       ST7789V2_Send_Data_Block(cfg, (uint8_t*) line_buffer1, 480*lines_per_buffer);
     }
+  }
+}
+
+void LCD_Refresh_Area(ST7789V2_cfg_t *cfg, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+  if (x0 >= ST7789V2_WIDTH || y0 >= ST7789V2_HEIGHT) {
+    return; // Invalid area, do nothing
+  }
+  if (x1 >= ST7789V2_WIDTH) {
+    x1 = ST7789V2_WIDTH - 1; // Clamp to max width
+  }
+  if (y1 >= ST7789V2_HEIGHT) {
+    y1 = ST7789V2_HEIGHT - 1; // Clamp to max height
+  }
+  if (x1 < x0 || y1 < y0) {
+    return; // Invalid area, do nothing
+  }
+  const uint16_t width = x1 - x0 + 1;
+  static uint16_t area_line_buffer[ST7789V2_WIDTH]; // RGB565 buffer for one scanline
+
+  for (uint16_t y = y0; y <= y1; y++) {
+    for (uint16_t x = x0; x <= x1; x++) {
+      uint16_t pixel_index = ST7789V2_WIDTH * y + x;
+      uint8_t packed = image_buffer[pixel_index >> 1];
+      uint8_t colour_index;
+
+      if (x & 1) {
+        colour_index = (packed >> 4) & 0x0F; // Odd pixel, upper 4 bits
+      } else {
+        colour_index = packed & 0x0F; // Even pixel, lower 4 bits
+      }
+
+      area_line_buffer[x - x0] = colour_map[colour_index];
+    }
+
+    uint32_t start_time = HAL_GetTick();
+
+    while (cfg->spi->SR & SPI_SR_BSY) { // Wait for any previous SPI transfer to complete before sending new data
+      if ((HAL_GetTick() - start_time) > SPI_TIMEOUT_MS) {
+        printf("SPI timeout\n");
+        return; // Timeout, exit to avoid hanging
+      }
+    }
+
+    ST7789V2_Set_Address_Window(cfg, x0, y, x1, y);
+    ST7789V2_Send_Command(cfg, 0x2C);
+    ST7789V2_Send_Data_Block(cfg, (uint8_t *)area_line_buffer, width * 2);
+
+    track_changes[y] = 0;
   }
 }
 
