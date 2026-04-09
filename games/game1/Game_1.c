@@ -15,7 +15,7 @@ extern ST7789V2_cfg_t cfg0;
 #define GAME1_BOX_Y 100
 #define GAME1_BOX_MIN_X 0
 #define GAME1_BOX_MAX_X 200
-#define GAME1_BOX_STEP 3
+#define GAME1_BOX_STEP 1
 #define GAME1_BOX_COLOUR 3
 
 static uint32_t animation_counter = 0;
@@ -67,7 +67,8 @@ static void game1_update(void) {
 }
 
 static void game1_render(void) {
-    uint32_t start = HAL_GetTick();
+    static uint32_t total_draw_time = 0;
+    static uint32_t total_refresh_time = 0;
     static uint32_t total_render_time = 0;
     static uint32_t sample_count = 0;
 
@@ -81,6 +82,11 @@ static void game1_render(void) {
 
     uint16_t y0 = GAME1_BOX_Y;
     uint16_t y1 = GAME1_BOX_Y + GAME1_BOX_HEIGHT - 1;
+
+    uint32_t render_start = HAL_GetTick();
+
+    // ---- Draw into framebuffer ----
+    uint32_t draw_start = HAL_GetTick();
 
     // Erase old box position
     LCD_Draw_Rect(old_left,
@@ -98,15 +104,29 @@ static void game1_render(void) {
                   GAME1_BOX_COLOUR,
                   1);
 
-    // Refresh only the area that changed
+    uint32_t draw_time = HAL_GetTick() - draw_start;
+
+    // ---- Push changed area to LCD ----
+    uint32_t refresh_start = HAL_GetTick();
+
     LCD_Refresh_Area(&cfg0, x0, y0, x1, y1);
 
-    uint32_t render_time = HAL_GetTick() - start;
+    uint32_t refresh_time = HAL_GetTick() - refresh_start;
+    uint32_t render_time = HAL_GetTick() - render_start;
+
+    total_draw_time += draw_time;
+    total_refresh_time += refresh_time;
     total_render_time += render_time;
     sample_count++;
 
     if (sample_count == 60) {
-        printf("Area redraw avg: %lu ms\n", total_render_time / 60);
+        printf("Avg draw: %lu ms, refresh: %lu ms, total: %lu ms\n",
+               total_draw_time / 60,
+               total_refresh_time / 60,
+               total_render_time / 60);
+
+        total_draw_time = 0;
+        total_refresh_time = 0;
         total_render_time = 0;
         sample_count = 0;
     }
