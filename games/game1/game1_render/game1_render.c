@@ -1,6 +1,7 @@
 #include "game1_render.h"
 #include "game1_world.h"
 #include "LCD.h"
+#include "stm32l476xx.h"
 
 extern ST7789V2_cfg_t cfg0;
 
@@ -19,3 +20,7 @@ void Game1_Render_DrawWorld(void) {
     }
   }
 }
+
+void Game1_Render_DrawPlayer(const Game1_Player *player) {
+  LCD_Draw_Rect(player->x, player->y, player->width, player->height, 3, 1);
+}`
