@@ -3,11 +3,11 @@
 
 #include <stdint.h>
 
-#define GAME1_TILE_SIZE 6
+#define GAME1_TILE_SIZE 8
 #define GAME1_MAP_WIDTH 30
 #define GAME1_MAP_HEIGHT 30
 
-typedef enum{
+typedef enum {
     TILE_EMPTY = 0,
     TILE_SOLID = 1
 } Game1_Tile;
