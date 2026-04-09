@@ -1,5 +1,14 @@
 #include "LCD.h"
+#include "ST7789V2_Driver.h"
+#include "stm32l4xx_hal.h"
+#include <stdint.h>
 
+// ===== LOCAL DEFINES =====
+#define SPI_TIMEOUT_MS 100
+#define LCD_AREA_BLOCK_ROWS 4
+
+// ===== LOCAL BUFFERS =====
+static uint16_t area_block_buffer[ST7789V2_WIDTH * LCD_AREA_BLOCK_ROWS];
 
 // Image buffer storing pixel data, 4 pixels per byte (2 bits per pixel)
 static uint8_t image_buffer[BUFFER_LENGTH];
@@ -228,6 +237,68 @@ void LCD_Refresh(ST7789V2_cfg_t* cfg) {
       ST7789V2_Send_Data_Block(cfg, (uint8_t*) line_buffer1, 480*lines_per_buffer);
     }
   }
+}
+
+void LCD_Refresh_Area(ST7789V2_cfg_t *cfg, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1) {
+    if (x0 >= ST7789V2_WIDTH || y0 >= ST7789V2_HEIGHT) {
+        return;
+    }
+
+    if (x1 >= ST7789V2_WIDTH) {
+        x1 = ST7789V2_WIDTH - 1;
+    }
+
+    if (y1 >= ST7789V2_HEIGHT) {
+        y1 = ST7789V2_HEIGHT - 1;
+    }
+
+    if (x1 < x0 || y1 < y0) {
+        return;
+    }
+
+    const uint16_t width = x1 - x0 + 1;
+
+    for (uint16_t block_y = y0; block_y <= y1; block_y += LCD_AREA_BLOCK_ROWS) {
+        uint16_t block_end_y = block_y + LCD_AREA_BLOCK_ROWS - 1;
+        if (block_end_y > y1) {
+            block_end_y = y1;
+        }
+
+        uint16_t block_height = block_end_y - block_y + 1;
+        uint32_t out = 0;
+
+        // Convert requested framebuffer area into RGB565 block buffer
+        for (uint16_t y = block_y; y <= block_end_y; y++) {
+            for (uint16_t x = x0; x <= x1; x++) {
+                uint32_t pixel_index = (uint32_t)ST7789V2_WIDTH * y + x;
+                uint8_t packed = image_buffer[pixel_index >> 1];
+                uint8_t colour_index;
+
+                if (x & 1) {
+                    colour_index = (packed >> 4) & 0x0F;
+                } else {
+                    colour_index = packed & 0x0F;
+                }
+
+                area_block_buffer[out++] = colour_map[colour_index];
+            }
+
+            track_changes[y] = 0;
+        }
+
+        uint32_t start_time = HAL_GetTick();
+
+        while (cfg->spi->SR & SPI_SR_BSY) {
+            if ((HAL_GetTick() - start_time) > SPI_TIMEOUT_MS) {
+                printf("SPI timeout\n");
+                return;
+            }
+        }
+
+        ST7789V2_Set_Address_Window(cfg, x0, block_y, x1, block_end_y);
+        ST7789V2_Send_Command(cfg, 0x2C);
+        ST7789V2_Send_Data_Block(cfg, (uint8_t *)area_block_buffer,  width * block_height * 2);
+    }
 }
 
 void LCD_randomiseBuffer() {

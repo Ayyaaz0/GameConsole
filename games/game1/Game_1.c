@@ -1,75 +1,141 @@
 #include "Game_1.h"
 
-#include "Buzzer.h"
 #include "InputHandler.h"
 #include "LCD.h"
-#include "PWM.h"
 #include "stm32l4xx_hal.h"
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdio.h>
 
 extern ST7789V2_cfg_t cfg0;
-extern PWM_cfg_t pwm_cfg;
-extern Buzzer_cfg_t buzzer_cfg;
+
+#define GAME1_BOX_WIDTH 20
+#define GAME1_BOX_HEIGHT 20
+#define GAME1_BOX_Y 100
+#define GAME1_BOX_MIN_X 0
+#define GAME1_BOX_MAX_X 200
+#define GAME1_BOX_STEP 1
+#define GAME1_BOX_COLOUR 3
 
 static uint32_t animation_counter = 0;
 static int16_t moving_x = 0;
+static int16_t prev_x = 0; // Track previous position
 static int8_t move_direction = 1;
 static bool game1_shutdown_requested = false;
 
 static void game1_init(void) {
     animation_counter = 0;
     moving_x = 0;
+    prev_x = 0;
     move_direction = 1;
-    game1_shutdown_requested = false; 
+    game1_shutdown_requested = false;
 
-    buzzer_tone(&buzzer_cfg, 1000, 30); // Play a tone to indicate game start
-    HAL_Delay(50);
-    buzzer_off(&buzzer_cfg);
+    // Draw static UI once
+    LCD_Fill_Buffer(0);
+    LCD_printString("Game 1: Moving Box", 20, 20, 1, 2);
+
+    // Draw initial box
+    LCD_Draw_Rect(20 + moving_x,
+                  GAME1_BOX_Y,
+                  GAME1_BOX_WIDTH,
+                  GAME1_BOX_HEIGHT,
+                  GAME1_BOX_COLOUR,
+                  1);
+
+    LCD_Refresh(&cfg0);
 }
 
 static void game1_update(void) {
     Input_Read();
+
     if (current_input.btn3_pressed) {
-        PWM_SetDuty(&pwm_cfg,50); 
         game1_shutdown_requested = true;
         return;
     }
+
     animation_counter++;
 
-    if (moving_x >= 200 || moving_x <= 0) {
-        move_direction *= -1; 
-    }
+    // Store previous position before moving
+    prev_x = moving_x;
 
-    uint8_t brightness = (moving_x * 100) / 200;
-    PWM_SetDuty(&pwm_cfg, brightness);  
+    moving_x += move_direction * GAME1_BOX_STEP;
+
+    if (moving_x >= GAME1_BOX_MAX_X || moving_x <= GAME1_BOX_MIN_X) {
+        move_direction *= -1;
+    }
 }
 
 static void game1_render(void) {
-  char counter[32];
-  char pwm_str[32];
-  uint8_t brightness = (moving_x * 100) / 200;
+    static uint32_t total_draw_time = 0;
+    static uint32_t total_refresh_time = 0;
+    static uint32_t total_render_time = 0;
+    static uint32_t sample_count = 0;
 
-  LCD_Fill_Buffer(0);
+    uint16_t old_left = 20 + prev_x;
+    uint16_t new_left = 20 + moving_x;
 
-  LCD_printString("GAME 1", 60, 10, 1, 3);
-  LCD_printString("[*]", 20 + moving_x, 100, 1, 3);
+    uint16_t x0 = (old_left < new_left) ? old_left : new_left;
+    uint16_t old_right = old_left + GAME1_BOX_WIDTH - 1;
+    uint16_t new_right = new_left + GAME1_BOX_WIDTH - 1;
+    uint16_t x1 = (old_right > new_right) ? old_right : new_right;
 
-  sprintf(counter, "Frame: %lu", animation_counter);
-  LCD_printString(counter, 50, 150, 1, 2);
+    uint16_t y0 = GAME1_BOX_Y;
+    uint16_t y1 = GAME1_BOX_Y + GAME1_BOX_HEIGHT - 1;
 
-  LCD_printString("LED: PWM Demo", 30, 180, 1, 1);
-  sprintf(pwm_str, "Brightness: %d%%", brightness);
-  LCD_printString(pwm_str, 30, 195, 1, 1);
+    uint32_t render_start = HAL_GetTick();
 
-  LCD_printString("Press BT3 to", 40, 220, 1, 1);
-  LCD_printString("Return to Menu", 40, 235, 1, 1);
+    // ---- Draw into framebuffer ----
+    uint32_t draw_start = HAL_GetTick();
 
-  LCD_Refresh(&cfg0);
+    // Erase old box position
+    LCD_Draw_Rect(old_left,
+                  GAME1_BOX_Y,
+                  GAME1_BOX_WIDTH,
+                  GAME1_BOX_HEIGHT,
+                  0,
+                  1);
+
+    // Draw new box position
+    LCD_Draw_Rect(new_left,
+                  GAME1_BOX_Y,
+                  GAME1_BOX_WIDTH,
+                  GAME1_BOX_HEIGHT,
+                  GAME1_BOX_COLOUR,
+                  1);
+
+    uint32_t draw_time = HAL_GetTick() - draw_start;
+
+    // ---- Push changed area to LCD ----
+    uint32_t refresh_start = HAL_GetTick();
+
+    LCD_Refresh_Area(&cfg0, x0, y0, x1, y1);
+
+    uint32_t refresh_time = HAL_GetTick() - refresh_start;
+    uint32_t render_time = HAL_GetTick() - render_start;
+
+    total_draw_time += draw_time;
+    total_refresh_time += refresh_time;
+    total_render_time += render_time;
+    sample_count++;
+
+    if (sample_count == 60) {
+        printf("Avg draw: %lu ms, refresh: %lu ms, total: %lu ms\n",
+               total_draw_time / 60,
+               total_refresh_time / 60,
+               total_render_time / 60);
+
+        total_draw_time = 0;
+        total_refresh_time = 0;
+        total_render_time = 0;
+        sample_count = 0;
+    }
 }
 
-static void game1_shutdown(void) { PWM_SetDuty(&pwm_cfg, 50); }
+static void game1_shutdown(void) {
+    LCD_Fill_Buffer(0);
+    LCD_Refresh(&cfg0);
+}
 
 bool Game1_ShouldExit(void) { return game1_shutdown_requested; }
 

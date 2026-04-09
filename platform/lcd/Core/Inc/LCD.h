@@ -298,6 +298,15 @@ void LCD_Fill_Buffer(const uint8_t colour);
 *   @param  colour - Value from 0-15 referring to the colour map colour*/
 void LCD_Fill(ST7789V2_cfg_t* cfg, const uint16_t x0, const uint16_t y0, const uint16_t x1, const uint16_t y1, const uint16_t colour);
 
+/* Refresh Area
+*   This function refreshes a specific area of the LCD
+*   @param  cfg - LCD Config struct
+*   @param  x0 - Start x-coordinate (top-left)
+*   @param  y0 - Start y-coordinate (top-left)
+*   @param  x1 - End x-coordinate (bottom-right)
+*   @param  y1 - End y-coordinate (bottom-right)*/
+void LCD_Refresh_Area(ST7789V2_cfg_t *cfg, uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1);
+
 extern const unsigned char font5x7_[480];// = {
 //     0x00, 0x00, 0x00, 0x00, 0x00,// (space)
 //     0x00, 0x00, 0x5F, 0x00, 0x00,// !
