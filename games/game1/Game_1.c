@@ -15,11 +15,12 @@ extern ST7789V2_cfg_t cfg0;
 #define GAME1_BOX_Y 100
 #define GAME1_BOX_MIN_X 0
 #define GAME1_BOX_MAX_X 200
-#define GAME1_BOX_STEP 2
+#define GAME1_BOX_STEP 3
+#define GAME1_BOX_COLOUR 3
 
 static uint32_t animation_counter = 0;
 static int16_t moving_x = 0;
-static int16_t prev_x = 0; // NEW: track previous position
+static int16_t prev_x = 0; // Track previous position
 static int8_t move_direction = 1;
 static bool game1_shutdown_requested = false;
 
@@ -28,14 +29,19 @@ static void game1_init(void) {
     moving_x = 0;
     prev_x = 0;
     move_direction = 1;
-    game1_shutdown_requested = false; 
+    game1_shutdown_requested = false;
 
     // Draw static UI once
-    LCD_Fill_Buffer(0); // Clear screen with black
+    LCD_Fill_Buffer(0);
     LCD_printString("Game 1: Moving Box", 20, 20, 1, 2);
 
     // Draw initial box
-    LCD_Draw_Rect(20 + moving_x, GAME1_BOX_Y, GAME1_BOX_WIDTH, GAME1_BOX_HEIGHT, 3, 1);
+    LCD_Draw_Rect(20 + moving_x,
+                  GAME1_BOX_Y,
+                  GAME1_BOX_WIDTH,
+                  GAME1_BOX_HEIGHT,
+                  GAME1_BOX_COLOUR,
+                  1);
 
     LCD_Refresh(&cfg0);
 }
@@ -53,10 +59,10 @@ static void game1_update(void) {
     // Store previous position before moving
     prev_x = moving_x;
 
-    moving_x += move_direction * GAME1_BOX_STEP;    
+    moving_x += move_direction * GAME1_BOX_STEP;
 
     if (moving_x >= GAME1_BOX_MAX_X || moving_x <= GAME1_BOX_MIN_X) {
-        move_direction *= -1; // Reverse direction
+        move_direction *= -1;
     }
 }
 
@@ -89,7 +95,7 @@ static void game1_render(void) {
                   GAME1_BOX_Y,
                   GAME1_BOX_WIDTH,
                   GAME1_BOX_HEIGHT,
-                  1,
+                  GAME1_BOX_COLOUR,
                   1);
 
     // Refresh only the area that changed
@@ -106,9 +112,7 @@ static void game1_render(void) {
     }
 }
 
-
 static void game1_shutdown(void) {
-    // Optional: clear screen when exiting
     LCD_Fill_Buffer(0);
     LCD_Refresh(&cfg0);
 }
