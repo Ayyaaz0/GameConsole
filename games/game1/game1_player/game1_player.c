@@ -10,6 +10,8 @@ extern Joystick_t joystick_data;
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
 #define GAME1_MAX_FALL_SPEED 6
+#define GAME1_COYOTE_FRAMES 6
+#define GAME1_MAX_AIR_JUMPS 1
 
 static void Game1_Player_ClampToScreen(Game1_Player *player) {
   if (player->x < 0) {
@@ -69,63 +71,85 @@ static int16_t Game1_Player_GetHorizontalInput(const Game1_Player *player) {
 }
 
 void Game1_Player_Update(Game1_Player *player) {
-  Joystick_Read(&joystick_cfg, &joystick_data);
+    Joystick_Read(&joystick_cfg, &joystick_data);
 
-  int16_t move_input = Game1_Player_GetHorizontalInput(player);
-  player->vx = move_input * player->move_speed;
+    int16_t move_input = Game1_Player_GetHorizontalInput(player);
+    player->vx = move_input * player->move_speed;
 
-  if (current_input.btn2_pressed && player->grounded) {
-    player->vy = -player->jump_strength;
-    player->grounded = 0;
-  }
-
-  player->vy += player->gravity;
-  if (player->vy > GAME1_MAX_FALL_SPEED) {
-    player->vy = GAME1_MAX_FALL_SPEED;
-  }
-
-  // Horizontal movement first
-  if (!Game1_Player_WouldCollideAt(player, player->x + player->vx, player->y)) {
-    player->x += player->vx;
-  } else {
-    player->vx = 0;
-  }
-
-  // Assume airborne unless there's a collision below
-  player->grounded = 0;
-
-  // Vertical movement second
-  if (!Game1_Player_WouldCollideAt(player, player->x, player->y + player->vy)) {
-    player->y += player->vy;
-  } else {
-    if (player->vy > 0) {
-      // Falling onto ground
-      while (!Game1_Player_WouldCollideAt(player, player->x, player->y + 1)) {
-        player->y += 1;
-      }
-      player->grounded = 1;
-    } else if (player->vy < 0) {
-      // Moving upward into ceiling
-      while (!Game1_Player_WouldCollideAt(player, player->x, player->y - 1)) {
-        player->y -= 1;
-      }
+    // Handle jump input:
+    // 1. normal grounded jump
+    // 2. coyote-time jump shortly after leaving ground
+    // 3. one air jump while already airborne
+    if (current_input.btn2_pressed) {
+        if (player->grounded || player->coyote_timer > 0) {
+            player->vy = -player->jump_strength;
+            player->grounded = 0;
+            player->coyote_timer = 0;
+        } else if (player->air_jumps_remaining > 0) {
+            player->vy = -player->jump_strength;
+            player->air_jumps_remaining--;
+        }
     }
 
-    player->vy = 0;
-  }
+    // Apply gravity
+    player->vy += player->gravity;
+    if (player->vy > GAME1_MAX_FALL_SPEED) {
+        player->vy = GAME1_MAX_FALL_SPEED;
+    }
 
-  Game1_Player_ClampToScreen(player);
+    // Horizontal movement first
+    if (!Game1_Player_WouldCollideAt(player, player->x + player->vx, player->y)) {
+        player->x += player->vx;
+    } else {
+        player->vx = 0;
+    }
+    
+    // If grounded last frame, we may now be walking off an edge.
+    // Start coyote time once we leave the ground.
+    if (player->grounded) {
+        player->grounded = 0;
+        player->coyote_timer = GAME1_COYOTE_FRAMES;
+    } else if (player->coyote_timer > 0) {
+        player->coyote_timer--;
+    }
+
+    // Vertical movement second
+    if (!Game1_Player_WouldCollideAt(player, player->x, player->y + player->vy)) {
+        player->y += player->vy;
+    } else {
+        if (player->vy > 0) {
+            // Falling onto ground
+            while (!Game1_Player_WouldCollideAt(player, player->x, player->y + 1)) {
+                player->y += 1;
+            }
+
+            player->grounded = 1;
+            player->air_jumps_remaining = GAME1_MAX_AIR_JUMPS;
+            player->coyote_timer = GAME1_COYOTE_FRAMES;
+        } else if (player->vy < 0) {
+            // Moving upward into ceiling
+            while (!Game1_Player_WouldCollideAt(player, player->x, player->y - 1)) {
+                player->y -= 1;
+            }
+        }
+
+        player->vy = 0;
+    }
+
+    Game1_Player_ClampToScreen(player);
 }
 
-void Game1_Player_Init(Game1_Player *player) {
-  player->x = 40;
-  player->y = 40;
-  player->vx = 0;
-  player->vy = 0;
-  player->width = 8;
-  player->height = 8;
-  player->move_speed = 2;
-  player->jump_strength = 8;
-  player->gravity = 1;
-  player->grounded = 0;
+void Game1_Player_Init(Game1_Player *player){
+    player->x = 40;
+    player->y = 40;
+    player->vx = 0;
+    player->vy = 0;
+    player->width = 8;
+    player->height = 8;
+    player->move_speed = 2;
+    player->jump_strength = 8;
+    player->gravity = 1;
+    player->grounded = 0;
+    player->air_jumps_remaining = GAME1_MAX_AIR_JUMPS;
+    player->coyote_timer = 0;
 }

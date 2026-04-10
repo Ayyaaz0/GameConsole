@@ -14,6 +14,8 @@ typedef struct {
     int16_t jump_strength;
     int16_t gravity;
     uint8_t grounded;
+    uint8_t air_jumps_remaining;
+    uint8_t coyote_timer;
 } Game1_Player;
 
 void Game1_Player_Init(Game1_Player *player);
