@@ -1,4 +1,6 @@
 #include "game1_player.h"
+
+#include "InputHandler.h"
 #include "game1_world/game1_world.h"
 #include "Joystick.h"
 
@@ -7,6 +9,7 @@ extern Joystick_t joystick_data;
 
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
+#define GAME1_MAX_FALL_SPEED 6
 
 static void Game1_Player_ClampToScreen(Game1_Player *player) {
   if (player->x < 0) {
@@ -43,42 +46,72 @@ static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player, int16_t t
   return 0;
 }
 
-static void Game1_GetMovementFromInput(int16_t *dx, int16_t *dy, int16_t speed){
-    *dx = 0;
-    *dy = 0;
+static int16_t Game1_Player_GetHorizontalInput(const Game1_Player *player) {
+  (void)player;
 
-    switch (joystick_data.direction) {
-    case N:  *dy = -speed; break;
-    case S:  *dy =  speed; break;
-    case E:  *dx =  speed; break;
-    case W:  *dx = -speed; break;
+  switch (joystick_data.direction) {
+  case W:
+  case NW:
+  case SW:
+    return -1;
 
-    case NE: *dx =  speed; *dy = -speed; break;
-    case NW: *dx = -speed; *dy = -speed; break;
-    case SE: *dx =  speed; *dy =  speed; break;
-    case SW: *dx = -speed; *dy =  speed; break;
+  case E:
+  case NE:
+  case SE:
+    return 1;
 
-    case CENTRE:
-    default:
-        break;
-    }
+  case N:
+  case S:
+  case CENTRE:
+  default:
+    return 0;
+  }
 }
 
 void Game1_Player_Update(Game1_Player *player) {
-  int16_t dx, dy;
-
   Joystick_Read(&joystick_cfg, &joystick_data);
 
-  Game1_GetMovementFromInput(&dx, &dy, player->speed);
+  int16_t move_input = Game1_Player_GetHorizontalInput(player);
+  player->vx = move_input * player->move_speed;
 
-  // Horizontal
-  if (!Game1_Player_WouldCollideAt(player, player->x + dx, player->y)) {
-    player->x += dx;
+  if (current_input.btn2_pressed && player->grounded) {
+    player->vy = -player->jump_strength;
+    player->grounded = 0;
   }
 
-  // Vertical
-  if (!Game1_Player_WouldCollideAt(player, player->x, player->y + dy)) {
-    player->y += dy;
+  player->vy += player->gravity;
+  if (player->vy > GAME1_MAX_FALL_SPEED) {
+    player->vy = GAME1_MAX_FALL_SPEED;
+  }
+
+  // Horizontal movement first
+  if (!Game1_Player_WouldCollideAt(player, player->x + player->vx, player->y)) {
+    player->x += player->vx;
+  } else {
+    player->vx = 0;
+  }
+
+  // Assume airborne unless there's a collision below
+  player->grounded = 0;
+
+  // Vertical movement second
+  if (!Game1_Player_WouldCollideAt(player, player->x, player->y + player->vy)) {
+    player->y += player->vy;
+  } else {
+    if (player->vy > 0) {
+      // Falling onto ground
+      while (!Game1_Player_WouldCollideAt(player, player->x, player->y + 1)) {
+        player->y += 1;
+      }
+      player->grounded = 1;
+    } else if (player->vy < 0) {
+      // Moving upward into ceiling
+      while (!Game1_Player_WouldCollideAt(player, player->x, player->y - 1)) {
+        player->y -= 1;
+      }
+    }
+
+    player->vy = 0;
   }
 
   Game1_Player_ClampToScreen(player);
@@ -87,7 +120,12 @@ void Game1_Player_Update(Game1_Player *player) {
 void Game1_Player_Init(Game1_Player *player) {
   player->x = 40;
   player->y = 40;
+  player->vx = 0;
+  player->vy = 0;
   player->width = 8;
   player->height = 8;
-  player->speed = 2;
+  player->move_speed = 2;
+  player->jump_strength = 8;
+  player->gravity = 1;
+  player->grounded = 0;
 }
