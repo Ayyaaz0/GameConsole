@@ -23,4 +23,4 @@ void Game1_Render_DrawWorld(void) {
 
 void Game1_Render_DrawPlayer(const Game1_Player *player) {
   LCD_Draw_Rect(player->x, player->y, player->width, player->height, 3, 1);
-}`
+}
