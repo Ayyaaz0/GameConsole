@@ -19,6 +19,6 @@ typedef struct {
 } Game1_Player;
 
 void Game1_Player_Init(Game1_Player *player);
-void Game1_Player_Update(Game1_Player *player);
+void Game1_Player_Update(Game1_Player *player, int16_t dx, uint8_t jump_pressed);
 
 #endif
