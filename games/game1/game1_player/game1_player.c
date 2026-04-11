@@ -1,11 +1,6 @@
 #include "game1_player.h"
 
-#include "InputHandler.h"
 #include "game1_world/game1_world.h"
-#include "Joystick.h"
-
-extern Joystick_cfg_t joystick_cfg;
-extern Joystick_t joystick_data;
 
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
@@ -48,28 +43,8 @@ static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player, int16_t t
   return 0;
 }
 
-static int16_t Game1_Player_GetHorizontalInput(void) {
-  switch (joystick_data.direction) {
-  case W:
-  case NW:
-  case SW:
-    return -1;
-
-  case E:
-  case NE:
-  case SE:
-    return 1;
-
-  case N:
-  case S:
-  case CENTRE:
-  default:
-    return 0;
-  }
-}
-
-static void Game1_Player_HandleJump(Game1_Player *player) {
-  if (!current_input.btn2_pressed) {
+static void Game1_Player_HandleJump(Game1_Player *player, uint8_t jump_pressed) {
+  if (!jump_pressed) {
     return;
   }
 
@@ -131,28 +106,25 @@ static void Game1_Player_MoveVertical(Game1_Player *player) {
   player->vy = 0;
 }
 
-void Game1_Player_Init(Game1_Player *player){
-    player->x = 40;
-    player->y = 40;
-    player->vx = 0;
-    player->vy = 0;
-    player->width = 8;
-    player->height = 8;
-    player->move_speed = 2;
-    player->jump_strength = 8;
-    player->gravity = 1;
-    player->grounded = 0;
-    player->air_jumps_remaining = GAME1_MAX_AIR_JUMPS;
-    player->coyote_timer = 0;
+void Game1_Player_Init(Game1_Player *player) {
+  player->x = 40;
+  player->y = 40;
+  player->vx = 0;
+  player->vy = 0;
+  player->width = 8;
+  player->height = 8;
+  player->move_speed = 2;
+  player->jump_strength = 8;
+  player->gravity = 1;
+  player->grounded = 0;
+  player->air_jumps_remaining = GAME1_MAX_AIR_JUMPS;
+  player->coyote_timer = 0;
 }
 
-void Game1_Player_Update(Game1_Player *player) {
-  Joystick_Read(&joystick_cfg, &joystick_data);
+void Game1_Player_Update(Game1_Player *player, int16_t dx, uint8_t jump_pressed) {
+  player->vx = dx * player->move_speed;
 
-  int16_t move_input = Game1_Player_GetHorizontalInput();
-  player->vx = move_input * player->move_speed;
-
-  Game1_Player_HandleJump(player);
+  Game1_Player_HandleJump(player, jump_pressed);
   Game1_Player_ApplyGravity(player);
   Game1_Player_MoveHorizontal(player);
   Game1_Player_UpdateAirState(player);
@@ -160,4 +132,3 @@ void Game1_Player_Update(Game1_Player *player) {
 
   Game1_Player_ClampToScreen(player);
 }
-
