@@ -48,9 +48,7 @@ static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player, int16_t t
   return 0;
 }
 
-static int16_t Game1_Player_GetHorizontalInput(const Game1_Player *player) {
-  (void)player;
-
+static int16_t Game1_Player_GetHorizontalInput(void) {
   switch (joystick_data.direction) {
   case W:
   case NW:
@@ -70,73 +68,67 @@ static int16_t Game1_Player_GetHorizontalInput(const Game1_Player *player) {
   }
 }
 
-void Game1_Player_Update(Game1_Player *player) {
-    Joystick_Read(&joystick_cfg, &joystick_data);
+static void Game1_Player_HandleJump(Game1_Player *player) {
+  if (!current_input.btn2_pressed) {
+    return;
+  }
 
-    int16_t move_input = Game1_Player_GetHorizontalInput(player);
-    player->vx = move_input * player->move_speed;
+  if (player->grounded || player->coyote_timer > 0) {
+    player->vy = -player->jump_strength;
+    player->grounded = 0;
+    player->coyote_timer = 0;
+  } else if (player->air_jumps_remaining > 0) {
+    player->vy = -player->jump_strength;
+    player->air_jumps_remaining--;
+  }
+}
 
-    // Handle jump input:
-    // 1. normal grounded jump
-    // 2. coyote-time jump shortly after leaving ground
-    // 3. one air jump while already airborne
-    if (current_input.btn2_pressed) {
-        if (player->grounded || player->coyote_timer > 0) {
-            player->vy = -player->jump_strength;
-            player->grounded = 0;
-            player->coyote_timer = 0;
-        } else if (player->air_jumps_remaining > 0) {
-            player->vy = -player->jump_strength;
-            player->air_jumps_remaining--;
-        }
+static void Game1_Player_ApplyGravity(Game1_Player *player) {
+  player->vy += player->gravity;
+
+  if (player->vy > GAME1_MAX_FALL_SPEED) {
+    player->vy = GAME1_MAX_FALL_SPEED;
+  }
+}
+
+static void Game1_Player_MoveHorizontal(Game1_Player *player) {
+  if (!Game1_Player_WouldCollideAt(player, player->x + player->vx, player->y)) {
+    player->x += player->vx;
+  } else {
+    player->vx = 0;
+  }
+}
+
+static void Game1_Player_UpdateAirState(Game1_Player *player) {
+  if (player->grounded) {
+    player->grounded = 0;
+    player->coyote_timer = GAME1_COYOTE_FRAMES;
+  } else if (player->coyote_timer > 0) {
+    player->coyote_timer--;
+  }
+}
+
+static void Game1_Player_MoveVertical(Game1_Player *player) {
+  if (!Game1_Player_WouldCollideAt(player, player->x, player->y + player->vy)) {
+    player->y += player->vy;
+    return;
+  }
+
+  if (player->vy > 0) {
+    while (!Game1_Player_WouldCollideAt(player, player->x, player->y + 1)) {
+      player->y += 1;
     }
 
-    // Apply gravity
-    player->vy += player->gravity;
-    if (player->vy > GAME1_MAX_FALL_SPEED) {
-        player->vy = GAME1_MAX_FALL_SPEED;
+    player->grounded = 1;
+    player->air_jumps_remaining = GAME1_MAX_AIR_JUMPS;
+    player->coyote_timer = GAME1_COYOTE_FRAMES;
+  } else if (player->vy < 0) {
+    while (!Game1_Player_WouldCollideAt(player, player->x, player->y - 1)) {
+      player->y -= 1;
     }
+  }
 
-    // Horizontal movement first
-    if (!Game1_Player_WouldCollideAt(player, player->x + player->vx, player->y)) {
-        player->x += player->vx;
-    } else {
-        player->vx = 0;
-    }
-    
-    // If grounded last frame, we may now be walking off an edge.
-    // Start coyote time once we leave the ground.
-    if (player->grounded) {
-        player->grounded = 0;
-        player->coyote_timer = GAME1_COYOTE_FRAMES;
-    } else if (player->coyote_timer > 0) {
-        player->coyote_timer--;
-    }
-
-    // Vertical movement second
-    if (!Game1_Player_WouldCollideAt(player, player->x, player->y + player->vy)) {
-        player->y += player->vy;
-    } else {
-        if (player->vy > 0) {
-            // Falling onto ground
-            while (!Game1_Player_WouldCollideAt(player, player->x, player->y + 1)) {
-                player->y += 1;
-            }
-
-            player->grounded = 1;
-            player->air_jumps_remaining = GAME1_MAX_AIR_JUMPS;
-            player->coyote_timer = GAME1_COYOTE_FRAMES;
-        } else if (player->vy < 0) {
-            // Moving upward into ceiling
-            while (!Game1_Player_WouldCollideAt(player, player->x, player->y - 1)) {
-                player->y -= 1;
-            }
-        }
-
-        player->vy = 0;
-    }
-
-    Game1_Player_ClampToScreen(player);
+  player->vy = 0;
 }
 
 void Game1_Player_Init(Game1_Player *player){
@@ -153,3 +145,19 @@ void Game1_Player_Init(Game1_Player *player){
     player->air_jumps_remaining = GAME1_MAX_AIR_JUMPS;
     player->coyote_timer = 0;
 }
+
+void Game1_Player_Update(Game1_Player *player) {
+  Joystick_Read(&joystick_cfg, &joystick_data);
+
+  int16_t move_input = Game1_Player_GetHorizontalInput();
+  player->vx = move_input * player->move_speed;
+
+  Game1_Player_HandleJump(player);
+  Game1_Player_ApplyGravity(player);
+  Game1_Player_MoveHorizontal(player);
+  Game1_Player_UpdateAirState(player);
+  Game1_Player_MoveVertical(player);
+
+  Game1_Player_ClampToScreen(player);
+}
+
