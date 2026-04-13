@@ -4,8 +4,11 @@
 #include <stdint.h>
 
 #define GAME1_TILE_SIZE 8
-#define GAME1_MAP_WIDTH 30
+#define GAME1_MAP_WIDTH 60
 #define GAME1_MAP_HEIGHT 30
+
+#define GAME1_WORLD_WIDTH_PX  (GAME1_MAP_WIDTH * GAME1_TILE_SIZE)
+#define GAME1_WORLD_HEIGHT_PX (GAME1_MAP_HEIGHT * GAME1_TILE_SIZE)
 
 typedef enum {
     TILE_EMPTY = 0,

@@ -3,6 +3,7 @@
 #include "InputHandler.h"
 #include "Joystick.h"
 #include "LCD.h"
+#include "game1_camera/game1_camera.h"
 #include "game1_player/game1_player.h"
 #include "game1_render/game1_render.h"
 #include "game1_world/game1_world.h"
@@ -15,6 +16,7 @@ extern Joystick_cfg_t joystick_cfg;
 extern Joystick_t joystick_data;
 
 static Game1_Player player;
+static Game1_Camera camera;
 static bool game1_shutdown_requested = false;
 
 static void game1_get_player_input(int16_t *dx, uint8_t *jump_pressed) {
@@ -50,6 +52,7 @@ static void game1_init(void) {
 
   Game1_World_Init();
   Game1_Player_Init(&player);
+  Game1_Camera_Init(&camera, 240, 240);
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
@@ -68,13 +71,17 @@ static void game1_update(void) {
 
   game1_get_player_input(&dx, &jump_pressed);
   Game1_Player_Update(&player, dx, jump_pressed);
+
+  Game1_Camera_Update(&camera, player.x + (player.width / 2),
+                      player.y + (player.height / 2), GAME1_WORLD_WIDTH_PX,
+                      GAME1_WORLD_HEIGHT_PX);
 }
 
 static void game1_render(void) {
   LCD_Fill_Buffer(0);
 
-  Game1_Render_DrawWorld();
-  Game1_Render_DrawPlayer(&player);
+  Game1_Render_DrawWorld(&camera);
+  Game1_Render_DrawPlayer(&player, &camera);
 
   LCD_Refresh(&cfg0);
 }

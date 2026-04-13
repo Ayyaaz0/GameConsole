@@ -2,13 +2,11 @@
 
 #include "game1_world/game1_world.h"
 
-#define GAME1_SCREEN_WIDTH 240
-#define GAME1_SCREEN_HEIGHT 240
 #define GAME1_MAX_FALL_SPEED 6
 #define GAME1_COYOTE_FRAMES 6
 #define GAME1_MAX_AIR_JUMPS 1
 
-static void Game1_Player_ClampToScreen(Game1_Player *player) {
+static void Game1_Player_ClampToWorld(Game1_Player *player) {
   if (player->x < 0) {
     player->x = 0;
   }
@@ -17,12 +15,12 @@ static void Game1_Player_ClampToScreen(Game1_Player *player) {
     player->y = 0;
   }
 
-  if (player->x + player->width > GAME1_SCREEN_WIDTH) {
-    player->x = GAME1_SCREEN_WIDTH - player->width;
+  if (player->x + player->width > GAME1_WORLD_WIDTH_PX) {
+    player->x = GAME1_WORLD_WIDTH_PX - player->width;
   }
 
-  if (player->y + player->height > GAME1_SCREEN_HEIGHT) {
-    player->y = GAME1_SCREEN_HEIGHT - player->height;
+  if (player->y + player->height > GAME1_WORLD_HEIGHT_PX) {
+    player->y = GAME1_WORLD_HEIGHT_PX - player->height;
   }
 }
 
@@ -130,5 +128,5 @@ void Game1_Player_Update(Game1_Player *player, int16_t dx, uint8_t jump_pressed)
   Game1_Player_UpdateAirState(player);
   Game1_Player_MoveVertical(player);
 
-  Game1_Player_ClampToScreen(player);
+  Game1_Player_ClampToWorld(player);
 }
