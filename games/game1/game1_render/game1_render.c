@@ -7,8 +7,8 @@
 #define GAME1_SCREEN_HEIGHT 240
 
 void Game1_Render_DrawWorld(const Game1_Camera *camera) {
-  for (uint16_t tile_y = 0; tile_y < GAME1_MAP_HEIGHT; tile_y++) {
-    for (uint16_t tile_x = 0; tile_x < GAME1_MAP_WIDTH; tile_x++) {
+  for (uint16_t tile_y = 0; tile_y < GAME1_ROOM_HEIGHT; tile_y++) {
+    for (uint16_t tile_x = 0; tile_x < GAME1_ROOM_WIDTH; tile_x++) {
       if (!Game1_World_IsSolid(tile_x, tile_y)) {
         continue;
       }
