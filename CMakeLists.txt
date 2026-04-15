@@ -1,11 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
 
-#
-# Refactor-friendly CMakeLists for GameConsole
-# During active restructuring, this auto-discovers source/include paths
-# inside platform/, shared/, game_1/, game_2/, game_3/, and games/.
-#
-
 # Setup compiler settings
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
