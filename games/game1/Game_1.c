@@ -47,40 +47,6 @@ static void game1_get_player_input(int16_t *dx, uint8_t *jump_pressed) {
   }
 }
 
-static void game1_handle_room_transition(void) {
-  uint8_t current_room = Game1_World_GetCurrentRoom();
-
-  // Move from room 0 to room 1 at right edge
-  if (current_room == 0 && (player.x + player.width) >= GAME1_WORLD_WIDTH_PX) {
-    Game1_World_SetCurrentRoom(1);
-
-    // Place player near left side of new room
-    player.x = 8;
-    if (player.y < 0) {
-      player.y = 0;
-    }
-
-    Game1_Camera_Update(&camera, player.x + (player.width / 2),
-                        player.y + (player.height / 2), GAME1_WORLD_WIDTH_PX,
-                        GAME1_WORLD_HEIGHT_PX);
-  }
-
-  // Move from room 1 to room 0 at left edge
-  else if (current_room == 1 && player.x <= 0) {
-    Game1_World_SetCurrentRoom(0);
-
-    // Place player near right side of previous room
-    player.x = GAME1_WORLD_WIDTH_PX - player.width - 8;
-    if (player.y < 0) {
-      player.y = 0;
-    }
-
-    Game1_Camera_Update(&camera, player.x + (player.width / 2),
-                        player.y + (player.height / 2), GAME1_WORLD_WIDTH_PX,
-                        GAME1_WORLD_HEIGHT_PX);
-  }
-}
-
 static void game1_init(void) {
   game1_shutdown_requested = false;
 
@@ -106,8 +72,8 @@ static void game1_update(void) {
   game1_get_player_input(&dx, &jump_pressed);
   Game1_Player_Update(&player, dx, jump_pressed);
 
-  game1_handle_room_transition();
-  
+  Game1_World_HandleTransition(&player, &camera);
+
   Game1_Camera_Update(&camera, player.x + (player.width / 2),
                       player.y + (player.height / 2), GAME1_WORLD_WIDTH_PX,
                       GAME1_WORLD_HEIGHT_PX);

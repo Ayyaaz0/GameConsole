@@ -96,4 +96,21 @@ void Game1_World_SetCurrentRoom(uint8_t room_index) {
   }
 }
 
+void Game1_World_HandleTransition(Game1_Player *player, Game1_Camera *camera) {
+  uint8_t current_room = Game1_World_GetCurrentRoom();
+
+  if (current_room == 0 &&
+      (player->x + player->width) >= GAME1_WORLD_WIDTH_PX) {
+    Game1_World_SetCurrentRoom(1);
+    player->x = 8;
+  } else if (current_room == 1 && player->x <= 0) {
+    Game1_World_SetCurrentRoom(0);
+    player->x = GAME1_WORLD_WIDTH_PX - player->width - 8;
+  }
+
+  Game1_Camera_Update(camera, player->x + (player->width / 2),
+                      player->y + (player->height / 2), GAME1_WORLD_WIDTH_PX,
+                      GAME1_WORLD_HEIGHT_PX);
+}
+
 uint8_t Game1_World_GetCurrentRoom(void) { return current_room; }
