@@ -1,6 +1,10 @@
 #include "game1_world.h"
 
+#define GAME1_ROOM_ENTRY_OFFSET 8
+#define GAME1_TRANSITION_COOLDOWN_FRAMES 7
+
 static uint8_t current_room = 0;
+static uint8_t transition_cooldown = 0;
 
 static uint8_t room_maps[GAME1_ROOM_COUNT][GAME1_ROOM_HEIGHT][GAME1_ROOM_WIDTH];
 
@@ -66,6 +70,7 @@ void Game1_World_Init(void) {
   Game1_World_BuildRoom1();
 
   current_room = 0;
+  transition_cooldown = 0;
 }
 
 uint8_t Game1_World_GetTile(uint16_t tile_x, uint16_t tile_y) {
@@ -97,19 +102,30 @@ void Game1_World_SetCurrentRoom(uint8_t room_index) {
 }
 
 void Game1_World_HandleTransition(Game1_Player *player, Game1_Camera *camera) {
-  uint8_t current_room = Game1_World_GetCurrentRoom();
-
-  if (current_room == 0 &&
-      (player->x + player->width) >= GAME1_WORLD_WIDTH_PX) {
-    Game1_World_SetCurrentRoom(1);
-    player->x = 8;
-  } else if (current_room == 1 && player->x <= 0) {
-    Game1_World_SetCurrentRoom(0);
-    player->x = GAME1_WORLD_WIDTH_PX - player->width - 8;
+  if (transition_cooldown > 0) {
+    transition_cooldown--;
   }
 
-  Game1_Camera_Update(camera, player->x + (player->width / 2),
-                      player->y + (player->height / 2), GAME1_WORLD_WIDTH_PX,
+  uint8_t room = Game1_World_GetCurrentRoom();
+
+  // Move from room 0 to room 1
+  if (room == 0 && (player->x + player->width) >= (GAME1_WORLD_WIDTH_PX - 1)) {
+    Game1_World_SetCurrentRoom(1);
+    player->x = GAME1_ROOM_ENTRY_OFFSET;
+    transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
+  }
+
+  // Move from room 1 back to room 0
+  else if (room == 1 && player->x <= 1) {
+    Game1_World_SetCurrentRoom(0);
+    player->x = GAME1_WORLD_WIDTH_PX - player->width - GAME1_ROOM_ENTRY_OFFSET;
+    transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
+  }
+
+  Game1_Camera_Update(camera,
+                      player->x + (player->width / 2),
+                      player->y + (player->height / 2),
+                      GAME1_WORLD_WIDTH_PX,
                       GAME1_WORLD_HEIGHT_PX);
 }
 
