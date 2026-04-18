@@ -9,7 +9,9 @@
 void Game1_Render_DrawWorld(const Game1_Camera *camera) {
   for (uint16_t tile_y = 0; tile_y < GAME1_ROOM_HEIGHT; tile_y++) {
     for (uint16_t tile_x = 0; tile_x < GAME1_ROOM_WIDTH; tile_x++) {
-      if (!Game1_World_IsSolid(tile_x, tile_y)) {
+      uint8_t tile = Game1_World_GetTile(tile_x, tile_y);
+
+      if (tile == TILE_EMPTY) {
         continue;
       }
 
@@ -21,7 +23,16 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
         continue;
       }
 
-      LCD_Draw_Rect(screen_x, screen_y, GAME1_TILE_SIZE, GAME1_TILE_SIZE, 2, 1);
+      uint8_t colour = 2;
+
+      if (tile == TILE_DOOR) {
+        colour = 4;
+      } else if (tile == TILE_KEY) {
+        colour = 3;
+      }
+
+      LCD_Draw_Rect(screen_x, screen_y, GAME1_TILE_SIZE, GAME1_TILE_SIZE,
+                    colour, 1);
     }
   }
 }

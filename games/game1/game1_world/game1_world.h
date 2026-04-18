@@ -14,11 +14,11 @@
 #define GAME1_WORLD_HEIGHT_PX (GAME1_ROOM_HEIGHT * GAME1_TILE_SIZE)
 
 typedef enum {
-    TILE_EMPTY = 0,
-    TILE_SOLID = 1,
-    TILE_DOOR_LOCKED = 2,
-    TILE_DOOR_OPEN = 3,
-    TILE_KEY = 4
+  TILE_EMPTY = 0,
+  TILE_SOLID = 1,
+  TILE_DOOR = 2,
+  TILE_DOOR_LOCKED = 3,
+  TILE_KEY = 4
 } Game1_Tile;
 
 void Game1_World_Init(void);
