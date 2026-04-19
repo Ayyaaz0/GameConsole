@@ -18,13 +18,6 @@ static void game3_init(void) {
 }
 
 static void game3_update(void) {
-  Input_Read();
-
-  if (current_input.btn3_pressed) {
-    game3_shutdown_requested = true;
-    return;
-  }
-
   frame_counter++;
 }
 

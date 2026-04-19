@@ -31,13 +31,6 @@ static void game1_init(void) {
 static void game1_update(void) {
   Game1_Input input = {0};
 
-  Input_Read();
-
-  if (current_input.b1_pressed) {
-    game1_shutdown_requested = true;
-    return;
-  }
-
   Game1_Input_Read(&input);
   Game1_Player_Update(&player, input.dx, input.jump_pressed);
 
