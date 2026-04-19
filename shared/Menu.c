@@ -30,7 +30,7 @@ static void render_home_menu(MenuSystem *menu) {
     LCD_printString((char *)game_list[i]->name, 70, y_pos, 1, text_size);
   }
 
-  LCD_printString("Press BT3", 50, 240, 1, 1);
+  LCD_printString("Press B1", 50, 240, 1, 1);
   LCD_Refresh(&cfg0);
 }
 
@@ -65,7 +65,7 @@ int Menu_Run(MenuSystem *menu) {
 
     last_direction = current_direction;
 
-    if (current_input.btn3_pressed) {
+    if (current_input.b1_pressed) {
       selected_game_index = menu->selected_option;
       break;
     }
