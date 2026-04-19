@@ -33,7 +33,7 @@ static void game1_update(void) {
 
   Input_Read();
 
-  if (current_input.btn3_pressed) {
+  if (current_input.b1_pressed) {
     game1_shutdown_requested = true;
     return;
   }
