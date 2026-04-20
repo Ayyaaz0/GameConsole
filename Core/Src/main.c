@@ -164,8 +164,17 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 static void Run_Selected_Game(int game_index) {
   const GameApi *game = game_list[game_index];
   game->init();
+
   while (!game->should_exit()) {
     uint32_t frame_start = HAL_GetTick();
+
+    Input_Read();
+
+    //Global exit back to menu
+    if (current_input.b1_pressed) {
+      break;
+    }
+    
     game->update();
     game->render();
 

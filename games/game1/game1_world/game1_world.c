@@ -127,27 +127,28 @@ void Game1_World_SetCurrentRoom(uint8_t room_index) {
 
 uint8_t Game1_World_GetCurrentRoom(void) { return current_room; }
 
-void Game1_World_HandleTransition(Game1_Player *player, Game1_Camera *camera) {
+void Game1_World_HandleTransition(Game1_Player *player, uint8_t interact_pressed) {
   if (transition_cooldown > 0) {
     transition_cooldown--;
   }
 
-  if (transition_cooldown == 0 && Game1_World_PlayerTouchesDoor(player)) {
+  if (transition_cooldown == 0 && Game1_World_PlayerTouchesDoor(player) && interact_pressed) {
     uint8_t room = Game1_World_GetCurrentRoom();
 
     if (room == 0) {
       Game1_World_SetCurrentRoom(1);
-      player->x = GAME1_ROOM_ENTRY_OFFSET;
+
+      player->x = 2 * GAME1_TILE_SIZE + GAME1_ROOM_ENTRY_OFFSET;
+      player->y = 24 * GAME1_TILE_SIZE;
+
       transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
     } else if (room == 1) {
       Game1_World_SetCurrentRoom(0);
-      player->x =
-          GAME1_WORLD_WIDTH_PX - player->width - GAME1_ROOM_ENTRY_OFFSET;
+
+      player->x = (26 * GAME1_TILE_SIZE) - player->width - GAME1_ROOM_ENTRY_OFFSET;
+      player->y = 24 * GAME1_TILE_SIZE;
+
       transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
     }
   }
-
-  Game1_Camera_Update(camera, player->x + (player->width / 2),
-                      player->y + (player->height / 2), GAME1_WORLD_WIDTH_PX,
-                      GAME1_WORLD_HEIGHT_PX);
 }

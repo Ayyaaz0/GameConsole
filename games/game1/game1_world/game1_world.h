@@ -31,6 +31,6 @@ uint8_t Game1_World_IsSolid(uint16_t tile_x, uint16_t tile_y);
 void Game1_World_SetCurrentRoom(uint8_t room_index);
 uint8_t Game1_World_GetCurrentRoom(void);
 
-void Game1_World_HandleTransition(Game1_Player *player, Game1_Camera *camera);
+void Game1_World_HandleTransition(Game1_Player *player, uint8_t interact_pressed);
 
 #endif

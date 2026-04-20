@@ -28,13 +28,6 @@ static void game2_init(void) {
 }
 
 static void game2_update(void) {
-  Input_Read();
-
-  if (current_input.btn3_pressed) {
-    game2_shutdown_requested = true;
-    return;
-  }
-
   animation_counter++;
 
   moving_y += move_direction * 2;

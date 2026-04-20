@@ -8,7 +8,8 @@ extern Joystick_t joystick_data;
 
 void Game1_Input_Read(Game1_Input *input) {
   input->dx = 0;
-  input->jump_pressed = current_input.btn2_pressed;
+  input->jump_pressed = current_input.btn3_pressed;
+  input->interact_pressed = current_input.btn2_pressed;
 
   Joystick_Read(&joystick_cfg, &joystick_data);
 

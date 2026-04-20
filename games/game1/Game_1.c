@@ -31,17 +31,10 @@ static void game1_init(void) {
 static void game1_update(void) {
   Game1_Input input = {0};
 
-  Input_Read();
-
-  if (current_input.btn3_pressed) {
-    game1_shutdown_requested = true;
-    return;
-  }
-
   Game1_Input_Read(&input);
   Game1_Player_Update(&player, input.dx, input.jump_pressed);
 
-  Game1_World_HandleTransition(&player, &camera);
+  Game1_World_HandleTransition(&player, input.interact_pressed);
 
   Game1_Camera_Update(&camera, player.x + (player.width / 2),
                       player.y + (player.height / 2), GAME1_WORLD_WIDTH_PX,
