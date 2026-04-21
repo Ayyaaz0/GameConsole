@@ -1,4 +1,6 @@
 #include "game1_world.h"
+#include "game1_player.h"
+#include <stdint.h>
 
 #define GAME1_ROOM_ENTRY_OFFSET 8
 #define GAME1_TRANSITION_COOLDOWN_FRAMES 10
@@ -127,6 +129,11 @@ void Game1_World_SetCurrentRoom(uint8_t room_index) {
 
 uint8_t Game1_World_GetCurrentRoom(void) { return current_room; }
 
+static void Game1_World_SpawnAtDoor(Game1_Player *player, uint16_t tile_x, uint16_t tile_y) {
+  player->x = (tile_x * GAME1_TILE_SIZE) + (GAME1_TILE_SIZE / 2) - (player->width / 2);
+  player->y = (tile_y * GAME1_TILE_SIZE) + (GAME1_TILE_SIZE / 2) - (player->height / 2);
+}
+
 void Game1_World_HandleTransition(Game1_Player *player, uint8_t interact_pressed) {
   if (transition_cooldown > 0) {
     transition_cooldown--;
@@ -134,20 +141,14 @@ void Game1_World_HandleTransition(Game1_Player *player, uint8_t interact_pressed
 
   if (transition_cooldown == 0 && Game1_World_PlayerTouchesDoor(player) && interact_pressed) {
     uint8_t room = Game1_World_GetCurrentRoom();
-
+    
     if (room == 0) {
       Game1_World_SetCurrentRoom(1);
-
-      player->x = 2 * GAME1_TILE_SIZE + GAME1_ROOM_ENTRY_OFFSET;
-      player->y = 24 * GAME1_TILE_SIZE;
-
+      Game1_World_SpawnAtDoor(player, 1, 25);
       transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
     } else if (room == 1) {
       Game1_World_SetCurrentRoom(0);
-
-      player->x = (26 * GAME1_TILE_SIZE) - player->width - GAME1_ROOM_ENTRY_OFFSET;
-      player->y = 24 * GAME1_TILE_SIZE;
-
+      Game1_World_SpawnAtDoor(player, 26, 25);
       transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
     }
   }
