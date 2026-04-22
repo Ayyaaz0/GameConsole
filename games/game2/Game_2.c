@@ -1,64 +1,48 @@
 #include "Game_2.h"
 
-#include "Buzzer.h"
+#include "car/race_car.h"
+#include "input/race_input.h"
+#include "render/race_render.h"
+
 #include "InputHandler.h"
-#include "LCD.h"
-#include "stm32l4xx_hal.h"
-
 #include <stdbool.h>
-#include <stdio.h>
 
-extern ST7789V2_cfg_t cfg0;
-extern Buzzer_cfg_t buzzer_cfg;
+#define GAME2_SCREEN_WIDTH 240
+#define GAME2_SCREEN_HEIGHT 240
 
-static uint32_t animation_counter = 0;
-static int16_t moving_y = 0;
-static int8_t move_direction = 1;
-static bool game2_shutdown_requested = false;
+static RaceCar g_player_car;
+static bool g_game2_should_exit = false;
 
-static void game2_init(void) {
-  animation_counter = 0;
-  moving_y = 0;
-  move_direction = 1;
-  game2_shutdown_requested = false;
+static void Game2_UpdatePlayer(void) {
+  RaceInput input;
 
-  buzzer_tone(&buzzer_cfg, 1200, 30);
-  HAL_Delay(50);
-  buzzer_off(&buzzer_cfg);
+  RaceInput_Read(&input);
+  RaceCar_Move(&g_player_car, input.move_x, input.move_y);
+  RaceCar_ClampToScreen(&g_player_car, GAME2_SCREEN_WIDTH, GAME2_SCREEN_HEIGHT);
 }
 
-static void game2_update(void) {
-  animation_counter++;
+void game2_init(void) {
+  g_game2_should_exit = false;
+  RaceCar_Init(&g_player_car);
+}
 
-  moving_y += move_direction * 2;
-  if (moving_y >= 150 || moving_y <= 0) {
-    move_direction *= -1;
+void game2_update(void) {
+
+  Input_Read();
+
+  if (current_input.b1_pressed) {
+    g_game2_should_exit = true;
+    return;
   }
+
+  Game2_UpdatePlayer();
 }
 
-static void game2_render(void) {
-  char counter[32];
+void game2_render(void) { RaceRender_DrawFrame(&g_player_car); }
 
-  LCD_Fill_Buffer(0);
+void game2_shutdown(void) {}
 
-  LCD_printString("GAME 2", 60, 10, 1, 3);
-  LCD_printString("[+]", 100, 60 + moving_y, 1, 3);
-
-  sprintf(counter, "Frame: %lu", animation_counter);
-  LCD_printString(counter, 50, 150, 1, 2);
-
-  LCD_printString("Slower Demo", 20, 180, 1, 1);
-  LCD_printString("20 FPS", 20, 195, 1, 1);
-
-  LCD_printString("Press BT3 to", 40, 220, 1, 1);
-  LCD_printString("Return to Menu", 40, 235, 1, 1);
-
-  LCD_Refresh(&cfg0);
-}
-
-static void game2_shutdown(void) {}
-
-bool Game2_ShouldExit(void) { return game2_shutdown_requested; }
+bool Game2_ShouldExit(void) { return g_game2_should_exit; }
 
 const GameApi game2_api = {
     .name = "Game 2",
