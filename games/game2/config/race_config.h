@@ -1,0 +1,12 @@
+#ifndef RACE_CONFIG_H
+#define RACE_CONFIG_H
+
+#define RACE_PLAYER_START_X 120.0f
+#define RACE_PLAYER_START_Y 180.0f
+
+#define RACE_PLAYER_WIDTH   12
+#define RACE_PLAYER_HEIGHT  18
+
+#define RACE_PLAYER_SPEED   2.0f
+
+#endif 
