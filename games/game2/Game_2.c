@@ -39,9 +39,9 @@ static void Game2_ClampPlayerToTrack(void) {
   RaceCar_ClampToScreen(&g_player_car, RACE_SCREEN_WIDTH, RACE_SCREEN_HEIGHT);
 }
 
-// Update the simple track animation.
 static void Game2_UpdateTrack(void) {
-  RaceTrack_Update(&g_track, RACE_TRACK_SCROLL_STEP);
+  // Move the visible road window forward in world space
+  RaceTrack_Advance(&g_track, RACE_TRACK_SCROLL_STEP);
 }
 
 // Update the player from input.
