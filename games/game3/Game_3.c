@@ -5,7 +5,9 @@
 #include "game3_input.h"
 #include "game3_player.h"
 #include "game3_render.h"
+#include "game3_ui/game3_ui.h"
 #include "game3_world.h"
+#include "game3_ui.h"
 #include "stm32l4xx_hal.h"
 
 #include <stdbool.h>
@@ -15,12 +17,19 @@ extern ST7789V2_cfg_t cfg0;
 
 static bool game3_shutdown_requested = false;
 static Game3_Player player; 
+static Game3_Hud hud; 
 
 static void game3_init(void) {
   game3_shutdown_requested = false;
   
   Game3_World_Init();
   Game3_Player_Init(&player);
+
+  hud.max_health = 3; 
+  hud.health = 3; 
+  hud.max_armour = 3; 
+  hud.armour = 3; 
+  hud.start_time_ms = HAL_GetTick(); 
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
@@ -38,6 +47,7 @@ static void game3_render(void) {
 
   Game3_Render_Draw_World();
   Game3_Render_Draw_Player(&player);
+  Game3_UI_Draw(&hud);
 
   LCD_Refresh(&cfg0);
 }

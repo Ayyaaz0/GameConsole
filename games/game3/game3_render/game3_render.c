@@ -8,9 +8,6 @@
 #define GAME3_SCREEN_HEIGHT 240 
 
 void Game3_Render_Draw_World(void) { 
-    LCD_printString("GAME 3", 10, 10, 1, 2); 
-    LCD_printString("Static Arena...", 10, 30, 1, 1); 
-
     for (uint16_t tile_y = 0; tile_y < GAME3_ROOM_HEIGHT; tile_y++) {
          for (uint16_t tile_x = 0; tile_x < GAME3_ROOM_WIDTH; tile_x++) { 
             uint8_t tile = Game3_World_Get_Tile(tile_x, tile_y); 
