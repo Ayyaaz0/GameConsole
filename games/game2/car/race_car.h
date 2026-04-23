@@ -18,4 +18,6 @@ void RaceCar_Move(RaceCar *car, float dx, float dy);
 
 void RaceCar_ClampToScreen(RaceCar *car, uint16_t screen_width, uint16_t screen_height);
 
+void RaceCar_ClampToHorizontalRange(RaceCar *car, float min_x, float max_x);
+
 #endif 
