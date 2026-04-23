@@ -50,7 +50,7 @@ void Game3_Player_Init(Game3_Player *player) {
     player->last_dash_time_ms = 0; 
 }
 
-void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed) { 
+void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx) { 
     uint32_t now = HAL_GetTick(); 
 
     player->is_grounded = Game3_Player_Is_On_Ground(player);
@@ -59,16 +59,15 @@ void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed,
         player->is_dashing = 1; 
         player->dash_end_time_ms = now + GAME3_PLAYER_DASH_DURATION_MS; 
         player->last_dash_time_ms = now; 
+        player->dash_dx = (dash_dx < 0) ? -1 : 1; 
+    }
+
+    if (player->is_dashing && now >= player->dash_end_time_ms) { 
+        player->is_dashing = 0; 
     }
 
     if (player->is_dashing) { 
-        if (now >= player->dash_end_time_ms) { 
-            player->is_dashing = 0;
-        } 
-    }
-
-    if (player->is_dashing) { 
-        player->vx = GAME3_PLAYER_DASH_SPEED;
+        player->vx = player->dash_dx * GAME3_PLAYER_DASH_SPEED;
     } else { 
         player->vx = dx * GAME3_PLAYER_MOVE_SPEED;
     }

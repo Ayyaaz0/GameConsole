@@ -17,10 +17,11 @@ typedef struct {
 
     uint8_t is_dashing; 
     uint32_t dash_end_time_ms; 
-    uint32_t last_dash_time_ms; 
+    uint32_t last_dash_time_ms;
+    int16_t dash_dx;  
 } Game3_Player; 
 
 void Game3_Player_Init(Game3_Player *player);
-void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed);
+void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx);
 
 #endif

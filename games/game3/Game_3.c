@@ -30,7 +30,7 @@ static void game3_update(void) {
   Game3_Input input = {0}; 
 
   Game3_Input_Read(&input);
-  Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed);
+  Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx);
 }
 
 static void game3_render(void) {
