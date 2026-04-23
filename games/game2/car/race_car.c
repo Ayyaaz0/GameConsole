@@ -44,3 +44,17 @@ void RaceCar_ClampToScreen(RaceCar *car, uint16_t screen_width,
     car->y = (float)(screen_height - car->height);
   }
 }
+
+void RaceCar_ClampToHorizontalRange(RaceCar *car, float min_x, float max_x) {
+  if ((car == NULL) || (car->active == false)) {
+    return;
+  }
+
+  if (car->x < min_x) {
+    car->x = min_x;
+  }
+
+  if (car->x > max_x) {
+    car->x = max_x;
+  }
+}
