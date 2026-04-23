@@ -2,7 +2,9 @@
 
 #include "InputHandler.h"
 #include "LCD.h"
+#include "game3_enemy/game3_enemy.h"
 #include "game3_input.h"
+#include "game3_enemy.h"
 #include "game3_player.h"
 #include "game3_render.h"
 #include "game3_ui/game3_ui.h"
@@ -17,6 +19,7 @@ extern ST7789V2_cfg_t cfg0;
 
 static bool game3_shutdown_requested = false;
 static Game3_Player player; 
+static Game3_Enemy enemy; 
 static Game3_Hud hud; 
 
 static void game3_init(void) {
@@ -24,6 +27,7 @@ static void game3_init(void) {
   
   Game3_World_Init();
   Game3_Player_Init(&player);
+  Game3_Enemy_Init(&enemy);
 
   hud.max_health = 3; 
   hud.health = 3; 
@@ -40,6 +44,7 @@ static void game3_update(void) {
 
   Game3_Input_Read(&input);
   Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx);
+  Game3_Enemy_Update(&enemy, &player);
 }
 
 static void game3_render(void) {
@@ -47,6 +52,7 @@ static void game3_render(void) {
 
   Game3_Render_Draw_World();
   Game3_Render_Draw_Player(&player);
+  Game3_Render_Draw_Enemy(&enemy);
   Game3_UI_Draw(&hud);
 
   LCD_Refresh(&cfg0);

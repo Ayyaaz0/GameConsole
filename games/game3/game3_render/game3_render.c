@@ -33,3 +33,7 @@ void Game3_Render_Draw_Player (const Game3_Player *player) {
     LCD_Draw_Rect(player->x, player->y, player->width, player->height, 1, 1);
 }
 
+void Game3_Render_Draw_Enemy(const Game3_Enemy *enemy) { 
+    LCD_Draw_Rect(enemy->x, enemy->y, enemy->width, enemy->height, 4, 1);
+}
+
