@@ -16,6 +16,7 @@ typedef struct {
     uint8_t grounded;
     uint8_t air_jumps_remaining;
     uint8_t coyote_timer;
+    uint8_t has_key;
 } Game1_Player;
 
 void Game1_Player_Init(Game1_Player *player);
