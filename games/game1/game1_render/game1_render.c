@@ -27,6 +27,8 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
 
       if (tile == TILE_DOOR) {
         colour = 4;
+      } else if (tile == TILE_DOOR_LOCKED) {
+        colour = 5;
       } else if (tile == TILE_KEY) {
         colour = 3;
       }
