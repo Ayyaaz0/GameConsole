@@ -8,8 +8,14 @@ typedef struct {
     int16_t x; 
     int16_t y; 
     int16_t move_speed; 
+    int16_t knockback_speed; 
+    int8_t knockback_dx; 
+
     uint8_t width; 
     uint8_t height; 
+
+    uint8_t is_in_knockback; 
+    uint32_t knockback_end_time_ms; 
 } Game3_Enemy; 
 
 void Game3_Enemy_Init(Game3_Enemy *enemy); 
