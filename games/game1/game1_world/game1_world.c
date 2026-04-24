@@ -4,6 +4,8 @@
 
 #include <stdint.h>
 
+#include "game1/room0.h"
+
 #define GAME1_TRANSITION_COOLDOWN_FRAMES 10
 #define GAME1_DOOR_HEIGHT 3
 
@@ -43,30 +45,23 @@ static void Game1_World_SpawnAtDoor(Game1_Player *player, uint16_t tile_x,uint16
   player->y = (tile_y_middle * GAME1_TILE_SIZE) + (GAME1_TILE_SIZE / 2) - (player->height / 2);
 }
 
+static uint8_t Game1_World_ConvertTiledTile(uint16_t tile) {
+    if (tile == 0) return TILE_EMPTY;
+
+    // Everything else = solid for now
+    return TILE_SOLID;
+}
+
 static void Game1_World_BuildRoom0(void) {
-  // Floor
-  for (uint16_t y = GAME1_ROOM_HEIGHT - 3; y < GAME1_ROOM_HEIGHT; y++) {
-    for (uint16_t x = 0; x < GAME1_ROOM_WIDTH; x++) {
-      room_maps[0][y][x] = TILE_SOLID;
+    for (uint16_t y = 0; y < ROOM0_HEIGHT; y++) {
+        for (uint16_t x = 0; x < ROOM0_WIDTH; x++) {
+
+            uint16_t tiled = room0_data[y * ROOM0_WIDTH + x];
+
+            room_maps[0][y][x] =
+                Game1_World_ConvertTiledTile(tiled);
+        }
     }
-  }
-
-  // Left test wall
-  for (uint16_t y = 23; y <= 26; y++) {
-    room_maps[0][y][3] = TILE_SOLID;
-    room_maps[0][y][4] = TILE_SOLID;
-  }
-
-  // Mid platform
-  for (uint16_t x = 12; x <= 18; x++) {
-    room_maps[0][20][x] = TILE_SOLID;
-  }
-
-  // Open door to Room 1
-  Game1_World_SetDoorColumn(0, ROOM0_TO_ROOM1_DOOR_X, ROOM0_TO_ROOM1_DOOR_Y, TILE_DOOR);
-
-  // Locked door to Room 2
-  Game1_World_SetDoorColumn(0, ROOM0_TO_ROOM2_DOOR_X, ROOM0_TO_ROOM2_DOOR_Y, TILE_DOOR_LOCKED);
 }
 
 static void Game1_World_BuildRoom1(void) {
