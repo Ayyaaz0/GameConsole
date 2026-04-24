@@ -9,46 +9,47 @@ void RaceInput_Read(RaceInput *input) {
     return;
   }
 
-  input->move_x = 0.0f;
-  input->move_y = 0.0f;
+  input->throttle = 0.0f;
+  input->brake = 0.0f;
+  input->steering = 0.0f;
 
   Joystick_Read(&joystick_cfg, &joystick_data);
 
   switch (joystick_data.direction) {
-  case E:
-    input->move_x = RACE_PLAYER_SPEED;
-    break;
-
-  case W:
-    input->move_x = -RACE_PLAYER_SPEED;
-    break;
-
   case N:
-    input->move_y = -RACE_PLAYER_SPEED;
+    input->throttle = 1.0f;
     break;
 
   case S:
-    input->move_y = RACE_PLAYER_SPEED;
+    input->brake = 1.0f;
     break;
 
-  case NE:
-    input->move_x = RACE_PLAYER_SPEED;
-    input->move_y = -RACE_PLAYER_SPEED;
+  case W:
+    input->steering = -1.0f;
+    break;
+
+  case E:
+    input->steering = 1.0f;
     break;
 
   case NW:
-    input->move_x = -RACE_PLAYER_SPEED;
-    input->move_y = -RACE_PLAYER_SPEED;
+    input->throttle = 1.0f;
+    input->steering = -1.0f;
     break;
 
-  case SE:
-    input->move_x = RACE_PLAYER_SPEED;
-    input->move_y = RACE_PLAYER_SPEED;
+  case NE:
+    input->throttle = 1.0f;
+    input->steering = 1.0f;
     break;
 
   case SW:
-    input->move_x = -RACE_PLAYER_SPEED;
-    input->move_y = RACE_PLAYER_SPEED;
+    input->brake = 1.0f;
+    input->steering = -1.0f;
+    break;
+
+  case SE:
+    input->brake = 1.0f;
+    input->steering = 1.0f;
     break;
 
   case CENTRE:
