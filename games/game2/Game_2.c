@@ -8,6 +8,7 @@
 #include "input/race_input.h"
 #include "render/race_render.h"
 #include "track/race_track.h"
+#include "camera/race_camera.h"
 
 #include <stdbool.h>
 
@@ -15,7 +16,10 @@ extern ST7789V2_cfg_t cfg0;
 
 static RaceCar g_player_car;
 static RaceTrack g_track;
+static RaceCamera g_camera;
 static bool g_game2_should_exit = false;
+
+static float g_track_scroll_remainder = 0.0f;
 
 // Put the player at a sensible starting spot on the track.
 static void Game2_ResetPlayerToTrackStart(void) {
@@ -38,12 +42,21 @@ static void Game2_ClampPlayerToTrack(void) {
 
   RaceCar_ClampToScreen(&g_player_car, RACE_SCREEN_WIDTH, RACE_SCREEN_HEIGHT);
 }
+static void Game2_UpdateTrackFromCarSpeed(void)
+{
+    int32_t scroll_amount = 0;
 
-static void Game2_UpdateTrack(void) {
-  // Move the visible road window forward in world space
-  RaceTrack_Advance(&g_track, RACE_TRACK_SCROLL_STEP);
+    // Keep fractional speed so slow speeds still eventually scroll the road
+    g_track_scroll_remainder += (g_player_car.speed > 0.0f ? g_player_car.speed : 0.0f);
+
+    scroll_amount = (int32_t)g_track_scroll_remainder;
+
+    if (scroll_amount != 0)
+    {
+        RaceTrack_Advance(&g_track, scroll_amount);
+        g_track_scroll_remainder -= (float)scroll_amount;
+    }
 }
-
 // Update the player from input.
 static void Game2_UpdatePlayer(void) {
   RaceInput input = {0};
@@ -58,6 +71,8 @@ void game2_init(void) {
 
   RaceTrack_Init(&g_track, RACE_SCREEN_WIDTH, RACE_SCREEN_HEIGHT);
   Game2_ResetPlayerToTrackStart();
+  RaceCamera_Init(&g_camera);
+  g_track_scroll_remainder = 0.0f;
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
@@ -73,7 +88,7 @@ void game2_update(void) {
   }
 
   Game2_UpdatePlayer();
-  Game2_UpdateTrack();
+  Game2_UpdateTrackFromCarSpeed();
 }
 
 void game2_render(void) { RaceRender_DrawFrame(&g_track, &g_player_car); }
