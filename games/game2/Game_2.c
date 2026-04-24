@@ -49,7 +49,7 @@ static void Game2_UpdatePlayer(void) {
   RaceInput input = {0};
 
   RaceInput_Read(&input);
-  RaceCar_Move(&g_player_car, input.move_x, input.move_y);
+  RaceCar_UpdatePhysics(&g_player_car, &input);
   Game2_ClampPlayerToTrack();
 }
 
@@ -72,8 +72,8 @@ void game2_update(void) {
     return;
   }
 
-  Game2_UpdateTrack();
   Game2_UpdatePlayer();
+  Game2_UpdateTrack();
 }
 
 void game2_render(void) { RaceRender_DrawFrame(&g_track, &g_player_car); }
