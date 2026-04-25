@@ -13,6 +13,8 @@
 #define GAME3_PLAYER_DASH_DURATION_MS   120
 #define GAME3_PLAYER_DASH_COOLDOWN_MS   400
 
+#define GAME3_PLAYER_ATTACK_DURATION    120
+
 #define GAME3_PLAYER_DAMAGE_COOLDOWN_MS 800
 #define GAME3_PLAYER_DAMAGE_FLASH_MS    250
 #define GAME3_PLAYER_START_HEALTH   3
@@ -53,6 +55,10 @@ void Game3_Player_Init(Game3_Player *player) {
     player->is_dashing = 0; 
     player->dash_end_time_ms = 0; 
     player->last_dash_time_ms = 0;
+
+    player->is_attacking = 0; 
+    player->attack_end_time_ms = 0; 
+    player->facing_dx = 1; 
     
     player->max_health = GAME3_PLAYER_START_HEALTH; 
     player->health = player->max_health; 
@@ -64,8 +70,23 @@ void Game3_Player_Init(Game3_Player *player) {
     player->damage_flash_end_time_ms = 0; 
 }
 
-void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx) { 
+void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx, uint8_t attack_pressed) { 
     uint32_t now = HAL_GetTick(); 
+
+    if (dx < 0) { 
+        player->facing_dx = -1; 
+    } else if (dx > 0) { 
+        player->facing_dx = 1; 
+    }
+
+    if (attack_pressed) { 
+        player->is_attacking = 1; 
+        player->attack_end_time_ms = now + GAME3_PLAYER_ATTACK_DURATION;
+    }
+
+    if (player->is_attacking && now >= player->attack_end_time_ms) {
+        player->is_attacking = 0; 
+    }
 
     player->is_grounded = Game3_Player_Is_On_Ground(player);
 
@@ -177,4 +198,8 @@ void Game3_Player_Take_Damage(Game3_Player *player, uint8_t amount) {
 
 uint8_t Game3_Player_Is_Damage_Flashing(const Game3_Player *player) { 
     return HAL_GetTick() < player->damage_flash_end_time_ms;
+}
+
+uint8_t Game3_Player_Is_Attacking(const Game3_Player *player) { 
+    return player->is_attacking;
 }

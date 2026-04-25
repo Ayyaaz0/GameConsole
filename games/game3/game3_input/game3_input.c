@@ -4,6 +4,7 @@
 #include "stm32l4xx_hal.h"
 #include "stm32l4xx_hal_tim.h"
 #include <stdint.h>
+#include "InputHandler.h"
 
 extern Joystick_cfg_t joystick_cfg;
 extern Joystick_t joystick_data;
@@ -32,8 +33,11 @@ void Game3_Input_Read(Game3_Input *input) {
     input->jump_pressed = 0; 
     input->dash_pressed = 0; 
     input->dash_dx = 0; 
+    input->attack_pressed = 0; 
 
     Joystick_Read(&joystick_cfg, &joystick_data);
+
+    input->attack_pressed = current_input.btn2_pressed;
 
     switch (joystick_data.direction) { 
         case W: 
