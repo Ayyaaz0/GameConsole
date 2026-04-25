@@ -11,10 +11,6 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
     for (uint16_t tile_x = 0; tile_x < GAME1_ROOM_WIDTH; tile_x++) {
       uint16_t tile = Game1_World_GetVisualTile(tile_x, tile_y);
 
-      if (tile == 0) {
-        continue;
-      }
-
       int16_t screen_x = (tile_x * GAME1_TILE_SIZE) - camera->x;
       int16_t screen_y = (tile_y * GAME1_TILE_SIZE) - camera->y;
 
@@ -23,10 +19,33 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
         continue;
       }
 
-      uint8_t colour = tile % 16;
+      if (tile == 0) {
+        continue;
+      }
 
-      if (colour == 0) {
-        colour = 1;
+      uint8_t colour;
+
+      switch (tile) {
+      case 19:
+        colour = 2; // wall
+        break;
+
+      case 10:
+        colour = 6; // water
+        break;
+
+      case 113:
+      case 114:
+        colour = 7; // decoration
+        break;
+
+      case 154:
+        colour = 8; // decoration
+        break;
+
+      default:
+        colour = 1; // other decoration
+        break;
       }
 
       LCD_Draw_Rect(screen_x, screen_y, GAME1_TILE_SIZE, GAME1_TILE_SIZE, colour, 1);
