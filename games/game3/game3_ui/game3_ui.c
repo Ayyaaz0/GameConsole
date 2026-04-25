@@ -38,7 +38,7 @@ static void Game3_UI_Draw_Health(const Game3_Hud *hud) {
     for (uint8_t i = 0; i < hud->max_health; i++) { 
         uint16_t x = GAME3_UI_HEART_START_X + (i * GAME3_UI_HEART_SPACING); 
 
-        if (i < hud->armour) { 
+        if (i < hud->health) { 
             LCD_Draw_Circle(x, GAME3_UI_HEART_Y, GAME3_UI_HEART_RADIUS, 2, 1); 
         } else { 
             LCD_Draw_Circle(x, GAME3_UI_HEART_Y, GAME3_UI_HEART_RADIUS, 13, 0); 
@@ -52,9 +52,7 @@ static void Game3_UI_Draw_Armour(const Game3_Hud *hud) {
 
         if (i < hud->armour) { 
             LCD_Draw_Circle(x, GAME3_UI_ARMOUR_Y, GAME3_UI_ARMOUR_RADIUS, 4, 1); 
-        } else { 
-            LCD_Draw_Circle(x, GAME3_UI_ARMOUR_Y, GAME3_UI_ARMOUR_RADIUS, 13, 0); 
-        }
+        } 
     }
 }
 
@@ -73,3 +71,4 @@ void Game3_UI_Draw(const Game3_Hud *hud) {
     Game3_UI_Draw_Armour(hud);
     Game3_UI_Draw_Time_And_Score(hud);
 }
+

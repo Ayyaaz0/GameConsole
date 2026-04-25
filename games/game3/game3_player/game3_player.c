@@ -13,6 +13,11 @@
 #define GAME3_PLAYER_DASH_DURATION_MS   120
 #define GAME3_PLAYER_DASH_COOLDOWN_MS   400
 
+#define GAME3_PLAYER_DAMAGE_COOLDOWN_MS 800
+#define GAME3_PLAYER_DAMAGE_FLASH_MS    250
+#define GAME3_PLAYER_START_HEALTH   3
+#define GAME3_PLAYER_START_ARMOUR   3
+
 static uint8_t Game3_Player_Is_Solid_At_Pixel(int16_t px, int16_t py) { 
     if (px < 0 || py < 0) { 
         return 1; 
@@ -47,7 +52,16 @@ void Game3_Player_Init(Game3_Player *player) {
 
     player->is_dashing = 0; 
     player->dash_end_time_ms = 0; 
-    player->last_dash_time_ms = 0; 
+    player->last_dash_time_ms = 0;
+    
+    player->max_health = GAME3_PLAYER_START_HEALTH; 
+    player->health = player->max_health; 
+
+    player->max_armour = GAME3_PLAYER_START_ARMOUR;
+    player->armour = player->max_armour; 
+
+    player->last_damage_time_ms = 0; 
+    player->damage_flash_end_time_ms = 0; 
 }
 
 void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx) { 
@@ -130,4 +144,37 @@ void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed,
         player->vy = 0; 
         player->is_grounded = 1; 
     }
+}
+
+void Game3_Player_Take_Damage(Game3_Player *player, uint8_t amount) { 
+    uint32_t now = HAL_GetTick(); 
+
+    if ((now - player->last_damage_time_ms) < GAME3_PLAYER_DAMAGE_COOLDOWN_MS) { 
+        return; 
+    }
+
+    if (player->health == 0) { 
+        return;
+    }
+
+    if (player->armour > 0) { 
+        if (amount >= player->armour) { 
+            player->armour = 0; 
+        } else { 
+            player->armour -= amount; 
+        }
+    } else { 
+        if (amount >= player->health) { 
+            player->health = 0; 
+        } else { 
+            player->health -= amount; 
+        }
+    }
+
+    player->last_damage_time_ms = now; 
+    player->damage_flash_end_time_ms = now + GAME3_PLAYER_DAMAGE_FLASH_MS;
+}
+
+uint8_t Game3_Player_Is_Damage_Flashing(const Game3_Player *player) { 
+    return HAL_GetTick() < player->damage_flash_end_time_ms;
 }

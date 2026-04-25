@@ -3,6 +3,7 @@
 #include "LCD.h"
 #include "game3_player.h"
 #include "game3_world.h"
+#include "game3_enemy.h"
 
 #define GAME3_SCREEN_WIDTH  240
 #define GAME3_SCREEN_HEIGHT 240 
@@ -30,10 +31,11 @@ void Game3_Render_Draw_World(void) {
 }
 
 void Game3_Render_Draw_Player (const Game3_Player *player) { 
-    LCD_Draw_Rect(player->x, player->y, player->width, player->height, 1, 1);
+    uint8_t colour = Game3_Player_Is_Damage_Flashing(player) ? 2 : 1;
+    LCD_Draw_Rect(player->x, player->y, player->width, player->height, colour, 1);
 }
 
 void Game3_Render_Draw_Enemy(const Game3_Enemy *enemy) { 
-    LCD_Draw_Rect(enemy->x, enemy->y, enemy->width, enemy->height, 4, 1);
+    LCD_Draw_Rect(enemy->x, enemy->y, enemy->width, enemy->height, 5, 1);
 }
 

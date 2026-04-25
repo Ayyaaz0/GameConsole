@@ -1,7 +1,6 @@
 #ifndef GAME3_RENDER_H
 #define GAME3_RENDER_H 
 
-#include "game3_enemy/game3_enemy.h"
 #include "game3_player.h"
 #include "game3_enemy.h" 
 

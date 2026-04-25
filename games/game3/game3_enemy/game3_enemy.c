@@ -26,7 +26,7 @@ static int16_t Game3_Enemy_Get_Enemy_Centre_Y(const Game3_Enemy *enemy) {
 }
 */ 
 
-static uint8_t Game3_Enemy_Is_Colliding_With_Player(const Game3_Enemy *enemy, const Game3_Player *player) { 
+uint8_t Game3_Enemy_Is_Touching_Player(const Game3_Enemy *enemy, const Game3_Player *player) { 
     if ((enemy->x + enemy->width) <= player->x) { 
         return 0; 
     }
@@ -85,7 +85,7 @@ void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player) {
         }
     }
 
-    if (Game3_Enemy_Is_Colliding_With_Player(enemy, player)) { 
+    if (Game3_Enemy_Is_Touching_Player(enemy, player)) { 
         int16_t enemy_centre_x = Game3_Enemy_Get_Enemy_Centre_X(enemy);
         int16_t player_centre_x = Game3_Enemy_Get_Player_Centre_X(player); 
 

@@ -43,8 +43,19 @@ static void game3_update(void) {
   Game3_Input input = {0}; 
 
   Game3_Input_Read(&input);
+
   Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx);
   Game3_Enemy_Update(&enemy, &player);
+
+  if (Game3_Enemy_Is_Touching_Player(&enemy, &player)) { 
+    Game3_Player_Take_Damage(&player, 1);
+  }
+
+  hud.health = player.health; 
+  hud.max_health = player.max_health; 
+
+  hud.armour = player.armour; 
+  hud.max_armour = player.max_armour; 
 }
 
 static void game3_render(void) {
