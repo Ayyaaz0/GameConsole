@@ -51,7 +51,7 @@ void Game1_World_SpawnAtStart(Game1_Player *player) {
 
 static uint8_t Game1_World_ConvertTiledTile(uint16_t tile) {
   switch (tile) {
-  case 19: return TILE_SOLID;
+  case 20: return TILE_SOLID;
   default: return TILE_EMPTY;
   }
 }

@@ -1,7 +1,7 @@
 #include "game1_render.h"
 #include "LCD.h"
 #include "game1_world/game1_world.h"
-#include "game1/room0_tiles.h"
+#include "room0_tiles.h"
 
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
