@@ -20,9 +20,12 @@ static bool game1_shutdown_requested = false;
 static void game1_init(void) {
   game1_shutdown_requested = false;
 
+  LCD_Set_Palette(PALETTE_CHROMA);
+
   Game1_World_Init();
   Game1_Player_Init(&player);
   Game1_Camera_Init(&camera, 240, 240);
+  Game1_World_SpawnAtStart(&player);
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
@@ -60,6 +63,7 @@ static void game1_render(void) {
 
 static void game1_shutdown(void) {
   LCD_Fill_Buffer(0);
+  LCD_Set_Palette(PALETTE_DEFAULT);
   LCD_Refresh(&cfg0);
 }
 

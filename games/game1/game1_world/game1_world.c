@@ -1,18 +1,18 @@
 #include "game1_world.h"
-
 #include "game1_player.h"
-
 #include <stdint.h>
-
 #include "game1/room0.h"
+
+static uint8_t current_room = 0;
+static uint8_t transition_cooldown = 0;
+static uint8_t room_maps[GAME1_ROOM_COUNT][GAME1_ROOM_HEIGHT][GAME1_ROOM_WIDTH];
+static uint16_t room_visuals[GAME1_ROOM_COUNT][GAME1_ROOM_HEIGHT][GAME1_ROOM_WIDTH];
 
 #define GAME1_TRANSITION_COOLDOWN_FRAMES 10
 #define GAME1_DOOR_HEIGHT 3
 
-static uint8_t current_room = 0;
-static uint8_t transition_cooldown = 0;
-
-static uint8_t room_maps[GAME1_ROOM_COUNT][GAME1_ROOM_HEIGHT][GAME1_ROOM_WIDTH];
+#define ROOM0_START_TILE_X 0
+#define ROOM0_START_TILE_Y 15
 
 #define ROOM0_TO_ROOM1_DOOR_X 26
 #define ROOM0_TO_ROOM1_DOOR_Y 24
@@ -40,16 +40,20 @@ static void Game1_World_SetDoorColumn(uint8_t room_index, uint16_t tile_x, uint1
   }
 }
 
-static void Game1_World_SpawnAtDoor(Game1_Player *player, uint16_t tile_x,uint16_t tile_y_middle) {
+void Game1_World_SpawnAtTile(Game1_Player *player, uint16_t tile_x, uint16_t tile_y) {
   player->x = (tile_x * GAME1_TILE_SIZE) + (GAME1_TILE_SIZE / 2) - (player->width / 2);
-  player->y = (tile_y_middle * GAME1_TILE_SIZE) + (GAME1_TILE_SIZE / 2) - (player->height / 2);
+  player->y = (tile_y * GAME1_TILE_SIZE) + (GAME1_TILE_SIZE / 2) - (player->height / 2);
+}
+
+void Game1_World_SpawnAtStart(Game1_Player *player) {
+  Game1_World_SpawnAtTile(player, ROOM0_START_TILE_X, ROOM0_START_TILE_Y);
 }
 
 static uint8_t Game1_World_ConvertTiledTile(uint16_t tile) {
-    if (tile == 0) return TILE_EMPTY;
-
-    // Everything else = solid for now
-    return TILE_SOLID;
+  switch (tile) {
+  case 20: return TILE_SOLID;
+  default: return TILE_EMPTY;
+  }
 }
 
 static void Game1_World_BuildRoom0(void) {
@@ -58,8 +62,8 @@ static void Game1_World_BuildRoom0(void) {
 
             uint16_t tiled = room0_data[y * ROOM0_WIDTH + x];
 
-            room_maps[0][y][x] =
-                Game1_World_ConvertTiledTile(tiled);
+            room_visuals[0][y][x] = tiled;  
+            room_maps[0][y][x] = Game1_World_ConvertTiledTile(tiled);
         }
     }
 }
@@ -100,6 +104,19 @@ static void Game1_World_BuildRoom2(void) {
   Game1_World_SetDoorColumn(2, ROOM2_TO_ROOM0_DOOR_X, ROOM2_TO_ROOM0_DOOR_Y, TILE_DOOR);
 }
 
+void Game1_World_Init(void) {
+  for (uint8_t room = 0; room < GAME1_ROOM_COUNT; room++) {
+    Game1_World_ClearRoom(room);
+  }
+
+  Game1_World_BuildRoom0();
+  Game1_World_BuildRoom1();
+  Game1_World_BuildRoom2();
+
+  current_room = 0;
+  transition_cooldown = 0;
+}
+
 static uint8_t Game1_World_PlayerTouchesDoor(const Game1_Player *player) {
   uint16_t left_tile = player->x / GAME1_TILE_SIZE;
   uint16_t right_tile = (player->x + player->width - 1) / GAME1_TILE_SIZE;
@@ -118,25 +135,20 @@ static uint8_t Game1_World_PlayerTouchesDoor(const Game1_Player *player) {
   return 0;
 }
 
-void Game1_World_Init(void) {
-  for (uint8_t room = 0; room < GAME1_ROOM_COUNT; room++) {
-    Game1_World_ClearRoom(room);
-  }
-
-  Game1_World_BuildRoom0();
-  Game1_World_BuildRoom1();
-  Game1_World_BuildRoom2();
-
-  current_room = 0;
-  transition_cooldown = 0;
-}
-
 uint8_t Game1_World_GetTile(uint16_t tile_x, uint16_t tile_y) {
   if (tile_x >= GAME1_ROOM_WIDTH || tile_y >= GAME1_ROOM_HEIGHT) {
     return TILE_SOLID;
   }
 
   return room_maps[current_room][tile_y][tile_x];
+}
+
+uint16_t Game1_World_GetVisualTile(uint16_t tile_x, uint16_t tile_y) {
+  if (tile_x >= GAME1_ROOM_WIDTH || tile_y >= GAME1_ROOM_HEIGHT) {
+    return 0;
+  }
+  
+  return room_visuals[current_room][tile_y][tile_x];
 }
 
 void Game1_World_SetTile(uint16_t tile_x, uint16_t tile_y, uint8_t tile) {
@@ -170,51 +182,9 @@ uint8_t Game1_World_PlayerTouchesKey(Game1_Player *player) {
 }
 
 void Game1_World_HandleTransition(Game1_Player *player, uint8_t interact_pressed) {
-  if (transition_cooldown > 0) {
-    transition_cooldown--;
-  }
-
-  if (!(transition_cooldown == 0 && interact_pressed &&
-        Game1_World_PlayerTouchesDoor(player))) {
-    return;
-  }
-
-  uint16_t tile_x = (player->x + (player->width / 2)) / GAME1_TILE_SIZE;
-  uint16_t tile_y = (player->y + (player->height / 2)) / GAME1_TILE_SIZE;
-  uint8_t tile = Game1_World_GetTile(tile_x, tile_y);
-
-  // Interact with locked door: unlock it, consume key, do not transition yet
-  if (tile == TILE_DOOR_LOCKED) {
-    if (!player->has_key) {
-      return;
-    }
-
-    Game1_World_SetDoorColumn(current_room, tile_x, ROOM0_TO_ROOM2_DOOR_Y, TILE_DOOR);
-    player->has_key = 0;
-    transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
-    return;
-  }
-
-  if (tile != TILE_DOOR) {
-    return;
-  }
-
-  // Open door transitions
-  if (current_room == 0 && tile_x == ROOM0_TO_ROOM1_DOOR_X) {
-    Game1_World_SetCurrentRoom(1);
-    Game1_World_SpawnAtDoor(player, ROOM1_TO_ROOM0_DOOR_X, ROOM1_TO_ROOM0_DOOR_Y + 1);
-    transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
-  } else if (current_room == 1 && tile_x == ROOM1_TO_ROOM0_DOOR_X) {
-    Game1_World_SetCurrentRoom(0);
-    Game1_World_SpawnAtDoor(player, ROOM0_TO_ROOM1_DOOR_X, ROOM0_TO_ROOM1_DOOR_Y + 1);
-    transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
-  } else if (current_room == 0 && tile_x == ROOM0_TO_ROOM2_DOOR_X) {
-    Game1_World_SetCurrentRoom(2);
-    Game1_World_SpawnAtDoor(player, ROOM2_TO_ROOM0_DOOR_X, ROOM2_TO_ROOM0_DOOR_Y + 1);
-    transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
-  } else if (current_room == 2 && tile_x == ROOM2_TO_ROOM0_DOOR_X) {
-    Game1_World_SetCurrentRoom(0);
-    Game1_World_SpawnAtDoor(player, ROOM0_TO_ROOM2_DOOR_X, ROOM0_TO_ROOM2_DOOR_Y + 1);
-    transition_cooldown = GAME1_TRANSITION_COOLDOWN_FRAMES;
-  }
+  (void)player;
+  (void)interact_pressed;
+  //  !!NOTE IMPORTANT!! 
+  // Transitions are disabled while Room 0 will be moved to Tiled data.
+  // Later, door positions should come from Tiled markers rather than hardcoded constants.
 }
