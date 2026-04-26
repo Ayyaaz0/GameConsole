@@ -8,7 +8,10 @@ typedef struct {
     uint8_t max_health; 
 
     uint8_t armour; 
-    uint8_t max_armour; 
+    uint8_t max_armour;
+
+    uint8_t ability; 
+    uint8_t max_ability; 
 
     uint32_t start_time_ms; 
     uint8_t is_game_over;
