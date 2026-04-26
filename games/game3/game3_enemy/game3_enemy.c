@@ -9,6 +9,7 @@
 #define GAME3_ENEMY_HIT_FLASH_MS    200
 #define GAME3_ENEMY_ATTACK_HIT_COOLDOWN_MS 250
 #define GAME3_ATTACK_SIZE   8  
+#define GAME3_ENEMY_START_HEALTH    3
 
 static int16_t Game3_Enemy_Get_Player_Centre_X(const Game3_Player *player) { 
     return player->x + (player->width / 2); 
@@ -30,6 +31,11 @@ static int16_t Game3_Enemy_Get_Enemy_Centre_Y(const Game3_Enemy *enemy) {
 */ 
 
 uint8_t Game3_Enemy_Is_Touching_Player(const Game3_Enemy *enemy, const Game3_Player *player) { 
+
+    if (!enemy->is_alive) { 
+        return 0;
+    }
+
     if ((enemy->x + enemy->width) <= player->x) { 
         return 0; 
     }
@@ -76,9 +82,18 @@ void Game3_Enemy_Init(Game3_Enemy *enemy) {
 
     enemy->hit_flash_end_time_ms = 0; 
     enemy->last_attack_hit_time_ms = 0; 
+
+    enemy->max_health = GAME3_ENEMY_START_HEALTH; 
+    enemy->health = enemy->max_health; 
+    enemy->is_alive = 1; 
 }
 
 void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player) { 
+
+    if (!enemy->is_alive) { 
+        return;   
+    }
+
     uint32_t now = HAL_GetTick(); 
 
     if (enemy->is_in_knockback) { 
@@ -122,6 +137,11 @@ void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player) {
 }
 
 uint8_t Game3_Enemy_Is_Touching_Player_Attack(const Game3_Enemy *enemy, const Game3_Player *player) { 
+
+    if (!enemy->is_alive) { 
+        return 0; 
+    }
+
     if (!Game3_Player_Is_Attacking(player)) { 
         return 0; 
     }
@@ -165,9 +185,21 @@ uint8_t Game3_Enemy_Is_Touching_Player_Attack(const Game3_Enemy *enemy, const Ga
 
 void Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *player) { 
     uint32_t now = HAL_GetTick(); 
+
+    if (!enemy->is_alive) {
+        return;
+    }
     
-    if ((now - enemy->last_attack_hit_time_ms) < GAME3_ENEMY_ATTACK_HIT_COOLDOWN_MS) { 
+    if (enemy->last_attack_hit_time_ms != 0 && (now - enemy->last_attack_hit_time_ms) < GAME3_ENEMY_ATTACK_HIT_COOLDOWN_MS) { 
         return; 
+    }   
+    
+    enemy->last_attack_hit_time_ms = now;  
+
+    Game3_Enemy_Take_Damage(enemy, 1);
+
+    if (!enemy->is_alive) {
+        return;
     }
 
     enemy->is_in_knockback = 1; 
@@ -180,10 +212,31 @@ void Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *
     }
 
     enemy->hit_flash_end_time_ms = now + GAME3_ENEMY_HIT_FLASH_MS;
-    enemy->last_attack_hit_time_ms = now;  
 
     enemy->x += enemy->knockback_dx * enemy->knockback_speed; 
     Game3_Enemy_Clamp_To_World(enemy);
+}
+
+void Game3_Enemy_Take_Damage(Game3_Enemy *enemy, uint8_t amount) { 
+    if (!enemy->is_alive) { 
+        return; 
+    }
+
+    if (amount >= enemy->health) { 
+        enemy->health = 0; 
+        enemy->is_alive = 0; 
+
+        enemy->is_in_knockback = 0; 
+        enemy->knockback_dx = 0; 
+        enemy->hit_flash_end_time_ms = 0; 
+        return; 
+    }
+
+    enemy->health -= amount; 
+}
+
+uint8_t Game3_Enemy_Is_Alive(const Game3_Enemy *enemy) { 
+    return enemy->is_alive;
 }
 
 uint8_t Game3_Enemy_Is_Hit_Flashing(const Game3_Enemy *enemy) { 

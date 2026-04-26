@@ -19,6 +19,10 @@ typedef struct {
 
     uint32_t hit_flash_end_time_ms; 
     uint32_t last_attack_hit_time_ms; 
+
+    uint8_t health; 
+    uint8_t max_health; 
+    uint8_t is_alive; 
 } Game3_Enemy;  
 
 void Game3_Enemy_Init(Game3_Enemy *enemy); 
@@ -27,5 +31,8 @@ uint8_t Game3_Enemy_Is_Touching_Player(const Game3_Enemy *enemy, const Game3_Pla
 void Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *player);
 uint8_t Game3_Enemy_Is_Hit_Flashing(const Game3_Enemy *enemy);
 uint8_t Game3_Enemy_Is_Touching_Player_Attack(const Game3_Enemy *enemy, const Game3_Player *player);
+
+void Game3_Enemy_Take_Damage(Game3_Enemy *enemy, uint8_t amount);
+uint8_t Game3_Enemy_Is_Alive(const Game3_Enemy *enemy);
 
 #endif
