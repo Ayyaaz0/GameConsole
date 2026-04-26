@@ -11,6 +11,13 @@
 #define GAME3_ATTACK_SIZE   8
 #define GAME3_ATTACK_COLOUR 6
 
+#define GAME3_ENEMY_HEALTH_BAR_WIDTH    12
+#define GAME3_ENEMY_HEALTH_BAR_HEIGHT   3
+#define GAME3_ENEMY_HEALTH_BAR_GAP  3
+
+#define GAME3_ENEMY_HEALTH_BAR_BG_COLOUR    13
+#define GAME3_ENEMY_HEALTH_BAR_FILL_COLOUR  2
+
 void Game3_Render_Draw_World(void) { 
     for (uint16_t tile_y = 0; tile_y < GAME3_ROOM_HEIGHT; tile_y++) {
          for (uint16_t tile_x = 0; tile_x < GAME3_ROOM_WIDTH; tile_x++) { 
@@ -38,6 +45,39 @@ void Game3_Render_Draw_Player (const Game3_Player *player) {
     LCD_Draw_Rect(player->x, player->y, player->width, player->height, colour, 1);
 }
 
+static void Game3_Render_Draw_Enemy_Health_Bar(const Game3_Enemy *enemy) { 
+    if (!Game3_Enemy_Is_Alive(enemy)) {
+        return; 
+    }
+
+    if (enemy->max_health == 0) { 
+        return; 
+    }
+
+    int16_t bar_x = enemy->x + (enemy->width/2) - (GAME3_ENEMY_HEALTH_BAR_WIDTH / 2);
+    int16_t bar_y = enemy->y - GAME3_ENEMY_HEALTH_BAR_GAP - GAME3_ENEMY_HEALTH_BAR_HEIGHT; 
+
+    if (bar_x < 0) { 
+        bar_x = 0; 
+    }
+
+    if (bar_x > (GAME3_SCREEN_WIDTH - GAME3_ENEMY_HEALTH_BAR_WIDTH)) { 
+        bar_x = GAME3_SCREEN_WIDTH - GAME3_ENEMY_HEALTH_BAR_WIDTH; 
+    }
+
+    if (bar_y < 0) { 
+        bar_y = 0; 
+    }
+
+    uint8_t filled_width = (enemy->health * GAME3_ENEMY_HEALTH_BAR_WIDTH) / enemy->max_health; 
+
+    LCD_Draw_Rect(bar_x, bar_y, GAME3_ENEMY_HEALTH_BAR_WIDTH, GAME3_ENEMY_HEALTH_BAR_HEIGHT, GAME3_ENEMY_HEALTH_BAR_BG_COLOUR, 1);
+
+    if (filled_width > 0) { 
+        LCD_Draw_Rect(bar_x, bar_y, filled_width, GAME3_ENEMY_HEALTH_BAR_HEIGHT, GAME3_ENEMY_HEALTH_BAR_FILL_COLOUR, 1);
+    }
+}
+
 void Game3_Render_Draw_Enemy(const Game3_Enemy *enemy) { 
     if (!Game3_Enemy_Is_Alive(enemy)) { 
         return; 
@@ -45,6 +85,7 @@ void Game3_Render_Draw_Enemy(const Game3_Enemy *enemy) {
 
     uint8_t colour = Game3_Enemy_Is_Hit_Flashing(enemy) ? 2 : 5; 
     LCD_Draw_Rect(enemy->x, enemy->y, enemy->width, enemy->height, colour, 1);
+    Game3_Render_Draw_Enemy_Health_Bar(enemy);
 }
 
 void Game3_Render_Draw_Player_Attack(const Game3_Player *player) { 

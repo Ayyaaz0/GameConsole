@@ -22,6 +22,11 @@ static Game3_Player player;
 static Game3_Enemy enemy; 
 static Game3_Hud hud; 
 
+static uint32_t Game3_Get_Current_Score(void) { 
+  uint32_t elapsed_seconds = (HAL_GetTick() - hud.start_time_ms) / 1000; 
+  return elapsed_seconds * 10; 
+}
+
 static void game3_init(void) {
   game3_shutdown_requested = false;
   
@@ -34,12 +39,18 @@ static void game3_init(void) {
   hud.max_armour = 3; 
   hud.armour = 3; 
   hud.start_time_ms = HAL_GetTick(); 
+  hud.is_game_over = 0; 
+  hud.final_score = 0; 
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
 }
 
 static void game3_update(void) {
+  if (hud.is_game_over) { 
+    return; 
+  }
+
   Game3_Input input = {0}; 
 
   Game3_Input_Read(&input);
@@ -60,10 +71,21 @@ static void game3_update(void) {
 
   hud.armour = player.armour; 
   hud.max_armour = player.max_armour; 
+
+  if (player.health == 0) { 
+    hud.is_game_over = 1; 
+    hud.final_score = Game3_Get_Current_Score();
+  }
 }
 
 static void game3_render(void) {
   LCD_Fill_Buffer(0);
+
+  if (hud.is_game_over) { 
+    Game3_UI_Draw_Game_Over(&hud);
+    LCD_Refresh(&cfg0);
+    return; 
+  }
 
   Game3_Render_Draw_World();
   Game3_Render_Draw_Player(&player);
