@@ -15,15 +15,18 @@
 #include <stdbool.h>
 #include <stdio.h>
 
+#define GAME3_ABILITY_GAIN_ON_HIT 1
+#define GAME3_MAX_ABILITY 4
+#define GAME3_ENEMY_SPAWN_SCORE_INTERVAL 100  
+#define GAME3_SCORE_PER_SECOND  10
+
 extern ST7789V2_cfg_t cfg0;
 
 static bool game3_shutdown_requested = false;
 static Game3_Player player; 
 static Game3_Enemy enemy; 
 static Game3_Hud hud; 
-
-#define GAME3_ABILITY_GAIN_ON_HIT 1
-#define GAME3_MAX_ABILITY 4
+static uint32_t next_enemy_spawn_score = GAME3_ENEMY_SPAWN_SCORE_INTERVAL; 
 
 static uint32_t Game3_Get_Current_Score(void) { 
   uint32_t elapsed_seconds = (HAL_GetTick() - hud.start_time_ms) / 1000; 
@@ -47,6 +50,8 @@ static void game3_init(void) {
   hud.ability = 0; 
   hud.max_ability = GAME3_MAX_ABILITY; 
 
+  next_enemy_spawn_score = GAME3_ENEMY_SPAWN_SCORE_INTERVAL;
+
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
 }
@@ -61,6 +66,16 @@ static void game3_update(void) {
   Game3_Input_Read(&input);
 
   Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx, input.attack_pressed);
+
+  uint32_t current_score = Game3_Get_Current_Score();
+
+  if (current_score >= next_enemy_spawn_score) { 
+    if (!Game3_Enemy_Is_Alive(&enemy)) { 
+      Game3_Enemy_Init(&enemy);
+    }
+
+    next_enemy_spawn_score += GAME3_ENEMY_SPAWN_SCORE_INTERVAL;
+  }
 
   if (Game3_Enemy_Is_Touching_Player_Attack(&enemy, &player)) { 
     if (Game3_Enemy_Start_Attack_Knockback(&enemy, &player)) { 
