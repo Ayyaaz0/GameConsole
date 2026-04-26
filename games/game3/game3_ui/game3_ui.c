@@ -20,6 +20,16 @@
 #define GAME3_UI_TIME_Y             10
 #define GAME3_UI_SCREEN_WIDTH       240
 
+#define GAME3_UI_ABILITY_X  185
+#define GAME3_UI_ABILITY_Y  10
+#define GAME3_UI_ABILITY_WIDTH  45
+#define GAME3_UI_ABILITY_HEIGHT 8
+#define GAME3_UI_ABILITY_FILL_WIDTH 30
+
+#define GAME3_UI_ABILITY_BG_COLOUR  13
+#define GAME3_UI_ABILITY_FILL_COLOUR    14
+#define GAME3_UI_ABILITY_BORDER_COLOUR  1
+
 static uint16_t Game3_UI_Get_Text_Width(const char *text, uint8_t font_size) { 
     return (uint16_t)(strlen(text) * 6 * font_size); 
 }
@@ -75,9 +85,20 @@ void Game3_UI_Draw_Game_Over(const Game3_Hud *hud) {
     LCD_printString(score_text, Game3_UI_Get_Centred_X(score_text, 2), 125, 1, 2);
 }
 
+static void Game3_UI_Draw_Ability_Meter(void) { 
+    LCD_printString("Ability Meter:", GAME3_UI_ABILITY_X, GAME3_UI_ABILITY_Y, 1, 1);
+
+    LCD_Draw_Rect(GAME3_UI_ABILITY_X, GAME3_UI_ABILITY_Y + 10, GAME3_UI_ABILITY_WIDTH, GAME3_UI_ABILITY_HEIGHT, GAME3_UI_ABILITY_BG_COLOUR, 1);
+
+    LCD_Draw_Rect(GAME3_UI_ABILITY_X, GAME3_UI_ABILITY_Y + 10, GAME3_UI_ABILITY_FILL_WIDTH, GAME3_UI_ABILITY_HEIGHT, GAME3_UI_ABILITY_FILL_COLOUR, 1);
+
+    LCD_Draw_Rect(GAME3_UI_ABILITY_X, GAME3_UI_ABILITY_Y + 10, GAME3_UI_ABILITY_WIDTH, GAME3_UI_ABILITY_HEIGHT, GAME3_UI_ABILITY_BORDER_COLOUR, 0);
+}
+
 void Game3_UI_Draw(const Game3_Hud *hud) { 
     Game3_UI_Draw_Health(hud);
     Game3_UI_Draw_Armour(hud);
     Game3_UI_Draw_Time_And_Score(hud);
+    Game3_UI_Draw_Ability_Meter();
 }
 
