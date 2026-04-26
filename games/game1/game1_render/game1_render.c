@@ -5,12 +5,11 @@
 
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
-#define GAME1_ANIMATION_SPEED_FRAMES 8
+#define GAME1_ANIMATION_SPEED_FRAMES 2
 
 static uint32_t animation_frame_counter = 0;
 
-static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y,
-                                  const uint8_t *pixels) {
+static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const uint8_t *pixels) {
   for (uint8_t y = 0; y < GAME1_TILE_SIZE; y++) {
     for (uint8_t x = 0; x < GAME1_TILE_SIZE; x++) {
       uint8_t colour = pixels[y * GAME1_TILE_SIZE + x];
@@ -58,8 +57,7 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
   animation_frame_counter++;
 }
 
-void Game1_Render_DrawPlayer(const Game1_Player *player,
-                             const Game1_Camera *camera) {
+void Game1_Render_DrawPlayer(const Game1_Player *player, const Game1_Camera *camera) {
   int16_t screen_x = player->x - camera->x;
   int16_t screen_y = player->y - camera->y;
 
