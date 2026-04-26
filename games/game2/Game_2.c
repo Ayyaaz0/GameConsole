@@ -9,6 +9,7 @@
 #include "config/race_config.h"
 #include "input/race_input.h"
 #include "render/race_render.h"
+#include "state/race_state.h"
 #include "track/race_track.h"
 
 
@@ -20,6 +21,7 @@ static RaceCar g_player_car;
 static RaceTrack g_track;
 static RaceCamera g_camera;
 static RaceCollisionState g_collision;
+static RaceState g_race_state;
 static bool g_game2_should_exit = false;
 
 static float g_track_scroll_remainder = 0.0f;
@@ -64,22 +66,62 @@ void game2_init(void) {
   g_track_scroll_remainder = 0.0f;
 
   RaceCollision_Reset(&g_collision);
+  RaceState_Init(&g_race_state);
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
 }
 
-void game2_update(void) {
-  // main.c already calls Input_Read() once per frame in the shared game runner.
-  // So this function should just consume the latest input state.
+static void Game2_ResetRace(void)
+{
+    RaceTrack_Init(&g_track, RACE_SCREEN_WIDTH, RACE_SCREEN_HEIGHT);
+    Game2_ResetPlayerToTrackStart();
+    RaceState_Init(&g_race_state);
+    g_track_scroll_remainder = 0.0f;
+}
 
+static void Game2_CheckCrashFromCollision(float impact_speed)
+{
+    if ((g_collision.hit_any_edge == true) &&
+        (impact_speed >= RACE_CRASH_SPEED_THRESHOLD))
+    {
+        RaceState_SetCrashed(&g_race_state);
+
+        g_player_car.speed = 0.0f;
+        g_player_car.heading_deg = 0.0f;
+    }
+}
+
+void game2_update(void) {
   if (current_input.b1_pressed) {
     g_game2_should_exit = true;
     return;
   }
 
+  if (RaceState_IsCrashed(&g_race_state)) {
+    // Restart: push joystick down to restart.
+    RaceInput restart_input = {0};
+    RaceInput_Read(&restart_input);
+
+    if (restart_input.brake > 0.0f) {
+      Game2_ResetRace();
+    }
+
+    return;
+  }
+
+  float impact_speed = 0.0f;
+
   Game2_UpdatePlayer();
+
+  impact_speed = g_player_car.speed;
+  if (impact_speed < 0.0f)
+  {
+     impact_speed = -impact_speed;
+  }
+
   RaceCollision_HandleRoadEdges(&g_collision, &g_player_car, &g_track);
+  Game2_CheckCrashFromCollision(impact_speed);
   Game2_UpdateTrackFromCarSpeed();
 }
 
