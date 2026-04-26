@@ -7,6 +7,7 @@
 void Game3_Render_Draw_World(void); 
 void Game3_Render_Draw_Player(const Game3_Player *player);
 void Game3_Render_Draw_Enemy(const Game3_Enemy *enemy);
+void Game3_Render_Draw_Player_Attack(const Game3_Player *player);
 
 #endif 
 
