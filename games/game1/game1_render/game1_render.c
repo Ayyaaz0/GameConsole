@@ -5,11 +5,15 @@
 
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
+#define GAME1_ANIMATION_SPEED_FRAMES 2
+
+static uint32_t animation_frame_counter = 0;
 
 static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const uint8_t *pixels) {
   for (uint8_t y = 0; y < GAME1_TILE_SIZE; y++) {
     for (uint8_t x = 0; x < GAME1_TILE_SIZE; x++) {
       uint8_t colour = pixels[y * GAME1_TILE_SIZE + x];
+
       if (colour == 0) {
         continue;
       }
@@ -20,6 +24,9 @@ static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const uint
 }
 
 void Game1_Render_DrawWorld(const Game1_Camera *camera) {
+  uint32_t animation_frame =
+      animation_frame_counter / GAME1_ANIMATION_SPEED_FRAMES;
+
   for (uint16_t tile_y = 0; tile_y < GAME1_ROOM_HEIGHT; tile_y++) {
     for (uint16_t tile_x = 0; tile_x < GAME1_ROOM_WIDTH; tile_x++) {
       uint16_t tile = Game1_World_GetVisualTile(tile_x, tile_y);
@@ -36,12 +43,18 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
         continue;
       }
 
-      const uint8_t *pixels = Game1_Tiles_Find(tile);
+      uint16_t draw_tile =
+          Game1_Tiles_ResolveAnimation(tile, animation_frame);
+
+      const uint8_t *pixels = Game1_Tiles_Find(draw_tile);
+
       if (pixels != 0) {
         Game1_Render_DrawTile(screen_x, screen_y, pixels);
       }
     }
   }
+
+  animation_frame_counter++;
 }
 
 void Game1_Render_DrawPlayer(const Game1_Player *player, const Game1_Camera *camera) {
