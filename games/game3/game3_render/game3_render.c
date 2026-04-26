@@ -39,7 +39,8 @@ void Game3_Render_Draw_Player (const Game3_Player *player) {
 }
 
 void Game3_Render_Draw_Enemy(const Game3_Enemy *enemy) { 
-    LCD_Draw_Rect(enemy->x, enemy->y, enemy->width, enemy->height, 5, 1);
+    uint8_t colour = Game3_Enemy_Is_Hit_Flashing(enemy) ? 2 : 5; 
+    LCD_Draw_Rect(enemy->x, enemy->y, enemy->width, enemy->height, colour, 1);
 }
 
 void Game3_Render_Draw_Player_Attack(const Game3_Player *player) { 
