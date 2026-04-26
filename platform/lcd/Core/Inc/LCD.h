@@ -117,6 +117,34 @@ Written by Aeron Jarvis and James Avery
 #define RGB565_GREY_14  0x3CE7  // #e7e7e7
 #define RGB565_GREY_15  0xFFFF  // #ffffff
 
+// ===== Chroma Palette Colours =====
+
+// Greys
+#define RGB565_CHROMA_BLACK       0x6108  // #0d0d0d
+#define RGB565_CHROMA_GREY_DARK   0xC739  // #383838
+#define RGB565_CHROMA_GREY        0x694A  // #4f4f4f
+#define RGB565_CHROMA_GREY_LIGHT  0x1084  // #828282
+#define RGB565_CHROMA_GREY_PALE   0xB6B5  // #b5b5b5
+#define RGB565_CHROMA_WHITE       0xDBDE  // #d9d9d9
+
+// Greens
+#define RGB565_CHROMA_GREEN_DARK  0x2B2A  // #328c25
+#define RGB565_CHROMA_GREEN_LIGHT 0x7D4E  // #5de34a
+
+// Browns
+#define RGB565_CHROMA_BROWN_DARK  0x4512  // #4c2712
+#define RGB565_CHROMA_BROWN       0x6036  // #60361d
+#define RGB565_CHROMA_BROWN_LIGHT 0xA864  // #a86437
+#define RGB565_CHROMA_SAND        0xD77C  // #d77c40
+
+// Reds
+#define RGB565_CHROMA_RED         0xE64E  // #e64e35
+#define RGB565_CHROMA_RED_LIGHT   0xFB68  // #fb684f
+
+// Blues
+#define RGB565_CHROMA_BLUE        0x639B  // #639bff
+#define RGB565_CHROMA_CYAN        0x4DCC  // #4dcced
+
 
 
 // ========== Buffer Configuration ==========
@@ -128,10 +156,11 @@ Written by Aeron Jarvis and James Avery
 *   See palette definitions in LCD.c for examples of how to create custom palettes.
 *   Each palette is an array of 16 RGB565 colour values that map to colour indices 0-15. */
 typedef enum {
-    PALETTE_DEFAULT = 0,
-    PALETTE_GREYSCALE = 1,
-    PALETTE_VINTAGE = 2,
-    PALETTE_CUSTOM = 3
+  PALETTE_DEFAULT,
+  PALETTE_GREYSCALE,
+  PALETTE_VINTAGE,
+  PALETTE_CUSTOM,
+  PALETTE_CHROMA
 } LCD_Palette;
 
 /* Set Colour Palette

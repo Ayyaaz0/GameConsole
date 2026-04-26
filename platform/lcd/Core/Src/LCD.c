@@ -46,6 +46,13 @@ static const uint16_t palette_custom[16] = {
     RGB565_PINK_BRIGHT, RGB565_CYAN_BRIGHT, RGB565_TEAL_BRIGHT, RGB565_CYAN_BRIGHT
 };
 
+static const uint16_t palette_chroma[16] = {
+    RGB565_CHROMA_BLACK, RGB565_CHROMA_GREY_DARK, RGB565_CHROMA_GREY, RGB565_CHROMA_GREY_LIGHT,
+    RGB565_CHROMA_GREY_PALE, RGB565_CHROMA_WHITE, RGB565_CHROMA_GREEN_DARK, RGB565_CHROMA_GREEN_LIGHT,
+    RGB565_CHROMA_BROWN_DARK, RGB565_CHROMA_BROWN, RGB565_CHROMA_BROWN_LIGHT, RGB565_CHROMA_SAND,
+    RGB565_CHROMA_RED, RGB565_CHROMA_RED_LIGHT, RGB565_CHROMA_BLUE, RGB565_CHROMA_CYAN
+};
+
 // Active palette pointer (defaults to palette_default)
 static const uint16_t *colour_map = palette_default;
 
@@ -89,6 +96,9 @@ void LCD_Set_Palette(LCD_Palette palette) {
       break;
     case PALETTE_CUSTOM:
       colour_map = palette_custom;
+      break;
+    case PALETTE_CHROMA:
+      colour_map = palette_chroma;
       break;
     case PALETTE_DEFAULT:
     default:
