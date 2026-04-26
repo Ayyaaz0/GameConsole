@@ -1,10 +1,23 @@
 #include "game1_render.h"
-
 #include "LCD.h"
 #include "game1_world/game1_world.h"
+#include "game1/room0_tiles.h"
 
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
+
+static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const uint8_t *pixels) {
+  for (uint8_t y = 0; y < GAME1_TILE_SIZE; y++) {
+    for (uint8_t x = 0; x < GAME1_TILE_SIZE; x++) {
+      uint8_t colour = pixels[y * GAME1_TILE_SIZE + x];
+      if (colour == 0) {
+        continue;
+      }
+
+      LCD_Draw_Rect(screen_x + x, screen_y + y, 1, 1, colour, 1);
+    }
+  }
+}
 
 void Game1_Render_DrawWorld(const Game1_Camera *camera) {
   for (uint16_t tile_y = 0; tile_y < GAME1_ROOM_HEIGHT; tile_y++) {
@@ -23,32 +36,10 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
         continue;
       }
 
-      uint8_t colour;
-
-      switch (tile) {
-      case 19:
-        colour = 2; // wall
-        break;
-
-      case 10:
-        colour = 6; // water
-        break;
-
-      case 113:
-      case 114:
-        colour = 7; // decoration
-        break;
-
-      case 154:
-        colour = 8; // decoration
-        break;
-
-      default:
-        colour = 1; // other decoration
-        break;
+      const uint8_t *pixels = Game1_Tiles_Find(tile);
+      if (pixels != 0) {
+        Game1_Render_DrawTile(screen_x, screen_y, pixels);
       }
-
-      LCD_Draw_Rect(screen_x, screen_y, GAME1_TILE_SIZE, GAME1_TILE_SIZE, colour, 1);
     }
   }
 }
