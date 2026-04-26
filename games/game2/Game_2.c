@@ -3,12 +3,14 @@
 #include "InputHandler.h"
 #include "LCD.h"
 
+#include "camera/race_camera.h"
 #include "car/race_car.h"
+#include "collisions/race_collisions.h"
 #include "config/race_config.h"
 #include "input/race_input.h"
 #include "render/race_render.h"
 #include "track/race_track.h"
-#include "camera/race_camera.h"
+
 
 #include <stdbool.h>
 
@@ -17,6 +19,7 @@ extern ST7789V2_cfg_t cfg0;
 static RaceCar g_player_car;
 static RaceTrack g_track;
 static RaceCamera g_camera;
+static RaceCollisionState g_collision;
 static bool g_game2_should_exit = false;
 
 static float g_track_scroll_remainder = 0.0f;
@@ -30,32 +33,19 @@ static void Game2_ResetPlayerToTrackStart(void) {
   g_player_car.y = RACE_PLAYER_START_Y;
 }
 
-// Keep the player inside the road width.
-static void Game2_ClampPlayerToTrack(void) {
-  int16_t min_x = 0;
-  int16_t max_x = 0;
+static void Game2_UpdateTrackFromCarSpeed(void) {
+  int32_t scroll_amount = 0;
 
-  RaceTrack_GetDriveBounds(&g_track, &min_x, &max_x);
+  // Keep fractional speed so slow speeds still eventually scroll the road
+  g_track_scroll_remainder +=
+      (g_player_car.speed > 0.0f ? g_player_car.speed : 0.0f);
 
-  RaceCar_ClampToHorizontalRange(&g_player_car, (float)min_x,
-                                 (float)(max_x - (int16_t)g_player_car.width));
+  scroll_amount = (int32_t)g_track_scroll_remainder;
 
-  RaceCar_ClampToScreen(&g_player_car, RACE_SCREEN_WIDTH, RACE_SCREEN_HEIGHT);
-}
-static void Game2_UpdateTrackFromCarSpeed(void)
-{
-    int32_t scroll_amount = 0;
-
-    // Keep fractional speed so slow speeds still eventually scroll the road
-    g_track_scroll_remainder += (g_player_car.speed > 0.0f ? g_player_car.speed : 0.0f);
-
-    scroll_amount = (int32_t)g_track_scroll_remainder;
-
-    if (scroll_amount != 0)
-    {
-        RaceTrack_Advance(&g_track, scroll_amount);
-        g_track_scroll_remainder -= (float)scroll_amount;
-    }
+  if (scroll_amount != 0) {
+    RaceTrack_Advance(&g_track, scroll_amount);
+    g_track_scroll_remainder -= (float)scroll_amount;
+  }
 }
 // Update the player from input.
 static void Game2_UpdatePlayer(void) {
@@ -63,7 +53,6 @@ static void Game2_UpdatePlayer(void) {
 
   RaceInput_Read(&input);
   RaceCar_UpdatePhysics(&g_player_car, &input);
-  Game2_ClampPlayerToTrack();
 }
 
 void game2_init(void) {
@@ -73,6 +62,8 @@ void game2_init(void) {
   Game2_ResetPlayerToTrackStart();
   RaceCamera_Init(&g_camera);
   g_track_scroll_remainder = 0.0f;
+
+  RaceCollision_Reset(&g_collision);
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
@@ -88,6 +79,7 @@ void game2_update(void) {
   }
 
   Game2_UpdatePlayer();
+  RaceCollision_HandleRoadEdges(&g_collision, &g_player_car, &g_track);
   Game2_UpdateTrackFromCarSpeed();
 }
 
