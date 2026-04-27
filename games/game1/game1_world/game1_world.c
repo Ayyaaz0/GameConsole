@@ -1,107 +1,107 @@
 #include "game1_world.h"
+
 #include "game1_player.h"
+
 #include <stdint.h>
+
 #include "game1/room0.h"
 
 static uint8_t current_room = 0;
-static uint8_t transition_cooldown = 0;
+
 static uint8_t room_maps[GAME1_ROOM_COUNT][GAME1_ROOM_HEIGHT][GAME1_ROOM_WIDTH];
 static uint16_t room_visuals[GAME1_ROOM_COUNT][GAME1_ROOM_HEIGHT][GAME1_ROOM_WIDTH];
 
-#define GAME1_TRANSITION_COOLDOWN_FRAMES 10
-#define GAME1_DOOR_HEIGHT 3
-
 #define ROOM0_START_TILE_X 0
 #define ROOM0_START_TILE_Y 15
-
-#define ROOM0_TO_ROOM1_DOOR_X 26
-#define ROOM0_TO_ROOM1_DOOR_Y 24
-
-#define ROOM1_TO_ROOM0_DOOR_X 1
-#define ROOM1_TO_ROOM0_DOOR_Y 24
-
-#define ROOM0_TO_ROOM2_DOOR_X 20
-#define ROOM0_TO_ROOM2_DOOR_Y 24
-
-#define ROOM2_TO_ROOM0_DOOR_X 1
-#define ROOM2_TO_ROOM0_DOOR_Y 24
 
 static void Game1_World_ClearRoom(uint8_t room_index) {
   for (uint16_t y = 0; y < GAME1_ROOM_HEIGHT; y++) {
     for (uint16_t x = 0; x < GAME1_ROOM_WIDTH; x++) {
       room_maps[room_index][y][x] = TILE_EMPTY;
+      room_visuals[room_index][y][x] = 0;
     }
-  }
-}
-
-static void Game1_World_SetDoorColumn(uint8_t room_index, uint16_t tile_x, uint16_t tile_y_top, uint8_t tile_type) {
-  for (uint16_t y = tile_y_top; y < tile_y_top + GAME1_DOOR_HEIGHT; y++) {
-    room_maps[room_index][y][tile_x] = tile_type;
   }
 }
 
 void Game1_World_SpawnAtTile(Game1_Player *player, uint16_t tile_x, uint16_t tile_y) {
   player->x = (tile_x * GAME1_TILE_SIZE) + (GAME1_TILE_SIZE / 2) - (player->width / 2);
+
   player->y = (tile_y * GAME1_TILE_SIZE) + (GAME1_TILE_SIZE / 2) - (player->height / 2);
 }
 
 void Game1_World_SpawnAtStart(Game1_Player *player) {
+  /*
+   * Temporary fallback spawn.
+   *
+   * Long-term, player spawn should come from the Tiled object layer
+   * through the entity system.
+   */
   Game1_World_SpawnAtTile(player, ROOM0_START_TILE_X, ROOM0_START_TILE_Y);
 }
 
 static uint8_t Game1_World_ConvertTiledTile(uint16_t tile) {
+  /*
+   * Collision conversion.
+   *
+   * My visual tiles use Tiled GIDs directly.
+   * Collision tiles are simplified into engine tile types.
+   *
+   * Doors, keys, spawn points, and interactables are no longer handled here.
+   * They should be loaded from the Tiled object layer as entities!
+   */
   switch (tile) {
-  case 20: return TILE_SOLID;
-  default: return TILE_EMPTY;
+  case 20:
+  case 116:
+    return TILE_SOLID;
+
+  default:
+    return TILE_EMPTY;
   }
 }
 
 static void Game1_World_BuildRoom0(void) {
-    for (uint16_t y = 0; y < ROOM0_HEIGHT; y++) {
-        for (uint16_t x = 0; x < ROOM0_WIDTH; x++) {
+  for (uint16_t y = 0; y < ROOM0_HEIGHT; y++) {
+    for (uint16_t x = 0; x < ROOM0_WIDTH; x++) {
+      uint16_t tiled = room0_data[y * ROOM0_WIDTH + x];
 
-            uint16_t tiled = room0_data[y * ROOM0_WIDTH + x];
-
-            room_visuals[0][y][x] = tiled;  
-            room_maps[0][y][x] = Game1_World_ConvertTiledTile(tiled);
-        }
+      room_visuals[0][y][x] = tiled;
+      room_maps[0][y][x] = Game1_World_ConvertTiledTile(tiled);
     }
+  }
 }
 
 static void Game1_World_BuildRoom1(void) {
-  // Floor
+  /*
+   * Placeholder room.
+   *
+   * To be replaced with generated Tiled data.
+   */
   for (uint16_t y = GAME1_ROOM_HEIGHT - 3; y < GAME1_ROOM_HEIGHT; y++) {
     for (uint16_t x = 0; x < GAME1_ROOM_WIDTH; x++) {
       room_maps[1][y][x] = TILE_SOLID;
     }
   }
 
-  // Lower platform
   for (uint16_t x = 6; x <= 12; x++) {
     room_maps[1][22][x] = TILE_SOLID;
   }
 
-  // Upper platform
   for (uint16_t x = 16; x <= 22; x++) {
     room_maps[1][18][x] = TILE_SOLID;
   }
-
-  // Door back to Room 0
-  Game1_World_SetDoorColumn(1, ROOM1_TO_ROOM0_DOOR_X, ROOM1_TO_ROOM0_DOOR_Y, TILE_DOOR);
-
-  // Key pickup
-  room_maps[1][17][20] = TILE_KEY;
 }
 
 static void Game1_World_BuildRoom2(void) {
-  // Floor
+  /*
+   * Placeholder room.
+   *
+   * To be later replaced with generated Tiled data.
+   */
   for (uint16_t y = GAME1_ROOM_HEIGHT - 3; y < GAME1_ROOM_HEIGHT; y++) {
     for (uint16_t x = 0; x < GAME1_ROOM_WIDTH; x++) {
       room_maps[2][y][x] = TILE_SOLID;
     }
   }
-  // Door back to Room 0
-  Game1_World_SetDoorColumn(2, ROOM2_TO_ROOM0_DOOR_X, ROOM2_TO_ROOM0_DOOR_Y, TILE_DOOR);
 }
 
 void Game1_World_Init(void) {
@@ -114,25 +114,6 @@ void Game1_World_Init(void) {
   Game1_World_BuildRoom2();
 
   current_room = 0;
-  transition_cooldown = 0;
-}
-
-static uint8_t Game1_World_PlayerTouchesDoor(const Game1_Player *player) {
-  uint16_t left_tile = player->x / GAME1_TILE_SIZE;
-  uint16_t right_tile = (player->x + player->width - 1) / GAME1_TILE_SIZE;
-  uint16_t top_tile = player->y / GAME1_TILE_SIZE;
-  uint16_t bottom_tile = (player->y + player->height - 1) / GAME1_TILE_SIZE;
-
-  for (uint16_t tile_y = top_tile; tile_y <= bottom_tile; tile_y++) {
-    for (uint16_t tile_x = left_tile; tile_x <= right_tile; tile_x++) {
-      uint8_t tile = Game1_World_GetTile(tile_x, tile_y);
-      if (tile == TILE_DOOR || tile == TILE_DOOR_LOCKED) {
-        return 1;
-      }
-    }
-  }
-
-  return 0;
 }
 
 uint8_t Game1_World_GetTile(uint16_t tile_x, uint16_t tile_y) {
@@ -147,7 +128,7 @@ uint16_t Game1_World_GetVisualTile(uint16_t tile_x, uint16_t tile_y) {
   if (tile_x >= GAME1_ROOM_WIDTH || tile_y >= GAME1_ROOM_HEIGHT) {
     return 0;
   }
-  
+
   return room_visuals[current_room][tile_y][tile_x];
 }
 
@@ -162,8 +143,7 @@ void Game1_World_SetTile(uint16_t tile_x, uint16_t tile_y, uint8_t tile) {
 uint8_t Game1_World_IsSolid(uint16_t tile_x, uint16_t tile_y) {
   uint8_t tile = Game1_World_GetTile(tile_x, tile_y);
 
-  // Locked doors are NOT solid now; they are interactable triggers.
-  return (tile == TILE_SOLID);
+  return tile == TILE_SOLID;
 }
 
 void Game1_World_SetCurrentRoom(uint8_t room_index) {
@@ -175,16 +155,19 @@ void Game1_World_SetCurrentRoom(uint8_t room_index) {
 uint8_t Game1_World_GetCurrentRoom(void) { return current_room; }
 
 uint8_t Game1_World_PlayerTouchesKey(Game1_Player *player) {
-  uint16_t tile_x = (player->x + (player->width / 2)) / GAME1_TILE_SIZE;
-  uint16_t tile_y = (player->y + (player->height / 2)) / GAME1_TILE_SIZE;
-
-  return Game1_World_GetTile(tile_x, tile_y) == TILE_KEY;
+  /*
+   * Keys are now entity objects, not map tiles.
+   * This is temporarily here so older calls do not break compilation.
+   */
+  (void)player;
+  return 0;
 }
 
 void Game1_World_HandleTransition(Game1_Player *player, uint8_t interact_pressed) {
+  /*
+   * Door transitions are now handled by the entity system.
+   * Doors should be non-solid trigger entities, not world tiles.
+   */
   (void)player;
   (void)interact_pressed;
-  //  !!NOTE IMPORTANT!! 
-  // Transitions are disabled while Room 0 will be moved to Tiled data.
-  // Later, door positions should come from Tiled markers rather than hardcoded constants.
 }
