@@ -113,3 +113,11 @@ void Game3_Render_Draw_Player_Attack(const Game3_Player *player) {
 
     LCD_Draw_Rect(attack_x, attack_y, GAME3_ATTACK_SIZE, GAME3_ATTACK_SIZE, GAME3_ATTACK_COLOUR, 1);
 }
+
+void Game3_Render_Draw_Projectile(const Game3_Projectile *projectile) { 
+    if (!projectile->is_active) { 
+        return; 
+    }
+
+    LCD_Draw_Rect(projectile->x, projectile->y, projectile->width, projectile->height, 14, 1);
+}

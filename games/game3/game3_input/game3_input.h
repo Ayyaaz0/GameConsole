@@ -9,6 +9,7 @@ typedef struct {
     uint8_t dash_pressed; 
     int16_t dash_dx; 
     uint8_t attack_pressed; 
+    uint8_t ability_pressed; 
 } Game3_Input; 
 
 void Game3_Input_Read(Game3_Input *input);

@@ -183,23 +183,25 @@ uint8_t Game3_Enemy_Is_Touching_Player_Attack(const Game3_Enemy *enemy, const Ga
     return 1; 
 }
 
-void Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *player) { 
+uint8_t Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *player) { 
     uint32_t now = HAL_GetTick(); 
 
     if (!enemy->is_alive) {
-        return;
+        return 0;
     }
     
     if (enemy->last_attack_hit_time_ms != 0 && (now - enemy->last_attack_hit_time_ms) < GAME3_ENEMY_ATTACK_HIT_COOLDOWN_MS) { 
-        return; 
+        return 0; 
     }   
     
     enemy->last_attack_hit_time_ms = now;  
 
     Game3_Enemy_Take_Damage(enemy, 1);
 
+    enemy->hit_flash_end_time_ms = now + GAME3_ENEMY_HIT_FLASH_MS;
+
     if (!enemy->is_alive) {
-        return;
+        return 1;
     }
 
     enemy->is_in_knockback = 1; 
@@ -211,10 +213,10 @@ void Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *
         enemy->knockback_dx = 2; 
     }
 
-    enemy->hit_flash_end_time_ms = now + GAME3_ENEMY_HIT_FLASH_MS;
-
     enemy->x += enemy->knockback_dx * enemy->knockback_speed; 
     Game3_Enemy_Clamp_To_World(enemy);
+
+    return 1;
 }
 
 void Game3_Enemy_Take_Damage(Game3_Enemy *enemy, uint8_t amount) { 

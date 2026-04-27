@@ -28,7 +28,7 @@ typedef struct {
 void Game3_Enemy_Init(Game3_Enemy *enemy); 
 void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player); 
 uint8_t Game3_Enemy_Is_Touching_Player(const Game3_Enemy *enemy, const Game3_Player *player); 
-void Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *player);
+uint8_t Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *player);
 uint8_t Game3_Enemy_Is_Hit_Flashing(const Game3_Enemy *enemy);
 uint8_t Game3_Enemy_Is_Touching_Player_Attack(const Game3_Enemy *enemy, const Game3_Player *player);
 
