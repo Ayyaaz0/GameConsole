@@ -34,10 +34,12 @@ void Game3_Input_Read(Game3_Input *input) {
     input->dash_pressed = 0; 
     input->dash_dx = 0; 
     input->attack_pressed = 0; 
+    input->ability_pressed = 0; 
 
     Joystick_Read(&joystick_cfg, &joystick_data);
 
     input->attack_pressed = current_input.btn2_pressed;
+    input->ability_pressed = current_input.btn3_pressed;
 
     switch (joystick_data.direction) { 
         case W: 

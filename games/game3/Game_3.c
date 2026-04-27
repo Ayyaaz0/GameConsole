@@ -19,6 +19,7 @@
 #define GAME3_MAX_ABILITY 4
 #define GAME3_ENEMY_SPAWN_SCORE_INTERVAL 100  
 #define GAME3_SCORE_PER_SECOND  10
+#define GAME3_ABILITY_COST GAME3_MAX_ABILITY
 
 extern ST7789V2_cfg_t cfg0;
 
@@ -64,6 +65,10 @@ static void game3_update(void) {
   Game3_Input input = {0}; 
 
   Game3_Input_Read(&input);
+
+  if (input.ability_pressed && hud.ability >= GAME3_ABILITY_COST) { 
+    hud.ability = 0; 
+  }
 
   Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx, input.attack_pressed);
 
