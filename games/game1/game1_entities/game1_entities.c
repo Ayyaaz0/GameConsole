@@ -41,6 +41,10 @@ void Game1_Entities_Render(const Game1_Camera *camera) {
   for (uint16_t i = 0; i < room0_entity_count; i++) {
     const Game1_Entity *entity = &room0_entities[i];
 
+    if (entity->type == ENTITY_SPAWN) {
+      continue;
+    }
+
     int16_t screen_x = entity->x - camera->x;
     int16_t screen_y = entity->y - camera->y;
 
@@ -50,8 +54,6 @@ void Game1_Entities_Render(const Game1_Camera *camera) {
       colour = 2;
     } else if (entity->type == ENTITY_KEY) {
       colour = 6;
-    } else if (entity->type == ENTITY_SPAWN) {
-      colour = 3;
     }
 
     LCD_Draw_Rect(screen_x, screen_y, entity->w, entity->h, colour, 1);

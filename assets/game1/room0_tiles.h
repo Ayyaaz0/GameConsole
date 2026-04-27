@@ -11,4 +11,4 @@
 const uint8_t *Game1_Tiles_Find(uint16_t tiled_id);
 uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id, uint32_t frame_counter);
 
-#endif // ROOM0_TILES_H
+#endif 
