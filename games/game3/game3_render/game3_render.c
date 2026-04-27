@@ -18,6 +18,9 @@
 #define GAME3_ENEMY_HEALTH_BAR_BG_COLOUR    13
 #define GAME3_ENEMY_HEALTH_BAR_FILL_COLOUR  2
 
+#define GAME3_ARMOUR_PACK_SIZE  6
+#define GAME3_ARMOUR_PACK_COLOUR  4
+
 void Game3_Render_Draw_World(void) { 
     for (uint16_t tile_y = 0; tile_y < GAME3_ROOM_HEIGHT; tile_y++) {
          for (uint16_t tile_x = 0; tile_x < GAME3_ROOM_WIDTH; tile_x++) { 
@@ -120,4 +123,12 @@ void Game3_Render_Draw_Projectile(const Game3_Projectile *projectile) {
     }
 
     LCD_Draw_Rect(projectile->x, projectile->y, projectile->width, projectile->height, 14, 1);
+}
+
+void Game3_Render_Draw_Armour_Pack(int16_t x, int16_t y, uint8_t is_active) { 
+    if (!is_active) { 
+        return; 
+    }
+
+    LCD_Draw_Rect(x, y, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, 1);
 }
