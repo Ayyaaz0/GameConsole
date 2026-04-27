@@ -1,5 +1,6 @@
 #include "race_render.h"
 #include "LCD.h"
+#include "../track/race_track_layout.h"
 
 extern ST7789V2_cfg_t cfg0;
 
@@ -19,19 +20,37 @@ static void RaceRender_DrawHud(void) {
 // Draw the road edges down the whole visible screen
 static void RaceTrackRenderer_DrawEdges(const RaceTrack *track) {
   uint16_t y = 0U;
-  int16_t left_x = 0;
-  int16_t right_x = 0;
 
   if (track == NULL) {
     return;
   }
 
-  left_x = RaceTrack_GetLeftEdgeX(track);
-  right_x = RaceTrack_GetRightEdgeX(track);
-
   for (y = 20U; y < track->screen_height; y += 12U) {
+    int32_t world_y = RaceTrack_GetWorldTopY(track) + (int32_t)y;
+    const RaceTrackSegment *segment = RaceTrackLayout_GetSegmentAtY(world_y);
+
+    int16_t left_x = 0;
+    int16_t right_x = 0;
+
+    if (segment == NULL) {
+      continue;
+    }
+
+    left_x =
+        (int16_t)(segment->road_center_x - (int16_t)(segment->road_width / 2U));
+    right_x =
+        (int16_t)(segment->road_center_x + (int16_t)(segment->road_width / 2U));
+
+    if (segment->left_curb) {
+      LCD_printString("||", (uint16_t)(left_x - 6), y, 1, 1);
+    }
+
     LCD_printString("|", (uint16_t)left_x, y, 1, 1);
     LCD_printString("|", (uint16_t)right_x, y, 1, 1);
+
+    if (segment->right_curb) {
+      LCD_printString("||", (uint16_t)(right_x + 2), y, 1, 1);
+    }
   }
 }
 

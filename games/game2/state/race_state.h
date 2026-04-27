@@ -3,10 +3,7 @@
 
 #include <stdbool.h>
 
-typedef enum {
-  RACE_STATE_RUNNING = 0,
-  RACE_STATE_CRASHED
-} RaceGameState;
+typedef enum { RACE_STATE_RUNNING = 0, RACE_STATE_CRASHED } RaceGameState;
 
 typedef struct {
   RaceGameState state;
