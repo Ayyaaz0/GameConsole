@@ -1,6 +1,7 @@
 #include "race_track.h"
 #include "../config/race_config.h"
 #include "../utils/race_math.h"
+#include "race_track_layout.h"
 #include <limits.h>
 #include <stddef.h>
 
@@ -67,27 +68,41 @@ int32_t RaceTrack_GetWorldBottomY(const RaceTrack *track) {
 }
 
 int16_t RaceTrack_GetCenterX(const RaceTrack *track) {
+  const RaceTrackSegment *segment = NULL;
+
   if (track == NULL) {
     return 0;
   }
 
-  return track->road_center_x;
+  segment = RaceTrackLayout_GetSegmentAtY(track->world_top_y + 120);
+
+  return segment->road_center_x;
 }
 
 int16_t RaceTrack_GetLeftEdgeX(const RaceTrack *track) {
+  const RaceTrackSegment *segment = NULL;
+
   if (track == NULL) {
     return 0;
   }
 
-  return (int16_t)(track->road_center_x - (int16_t)(track->road_width / 2U));
+  segment = RaceTrackLayout_GetSegmentAtY(track->world_top_y + 120);
+
+  return (int16_t)(segment->road_center_x -
+                   (int16_t)(segment->road_width / 2U));
 }
 
 int16_t RaceTrack_GetRightEdgeX(const RaceTrack *track) {
+  const RaceTrackSegment *segment = NULL;
+
   if (track == NULL) {
     return 0;
   }
 
-  return (int16_t)(track->road_center_x + (int16_t)(track->road_width / 2U));
+  segment = RaceTrackLayout_GetSegmentAtY(track->world_top_y + 120);
+
+  return (int16_t)(segment->road_center_x +
+                   (int16_t)(segment->road_width / 2U));
 }
 
 void RaceTrack_GetDriveBounds(const RaceTrack *track, int16_t *min_x,
@@ -134,4 +149,52 @@ int32_t RaceTrack_GetStartFinishWorldY(const RaceTrack *track) {
   }
 
   return track->start_finish_world_y;
+}
+
+const RaceTrackSegment *RaceTrack_GetCurrentSegment(const RaceTrack *track) {
+  if (track == NULL) {
+    return NULL;
+  }
+
+  return RaceTrackLayout_GetSegmentAtY(track->world_top_y + 120);
+}
+
+const char *RaceTrack_GetCurrentCornerName(const RaceTrack *track) {
+  const RaceTrackSegment *segment = RaceTrack_GetCurrentSegment(track);
+
+  if (segment == NULL) {
+    return "UNKNOWN";
+  }
+
+  return segment->corner_name;
+}
+
+RaceSector RaceTrack_GetCurrentSector(const RaceTrack *track) {
+  const RaceTrackSegment *segment = RaceTrack_GetCurrentSegment(track);
+
+  if (segment == NULL) {
+    return RACE_SECTOR_1;
+  }
+
+  return segment->sector;
+}
+
+bool RaceTrack_HasLeftCurbAtY(int32_t world_y) {
+  const RaceTrackSegment *segment = RaceTrackLayout_GetSegmentAtY(world_y);
+
+  if (segment == NULL) {
+    return false;
+  }
+
+  return segment->left_curb;
+}
+
+bool RaceTrack_HasRightCurbAtY(int32_t world_y) {
+  const RaceTrackSegment *segment = RaceTrackLayout_GetSegmentAtY(world_y);
+
+  if (segment == NULL) {
+    return false;
+  }
+
+  return segment->right_curb;
 }

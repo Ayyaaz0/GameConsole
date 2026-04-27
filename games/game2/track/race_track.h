@@ -1,6 +1,7 @@
 #ifndef RACE_TRACK_H
 #define RACE_TRACK_H
 
+#include "race_track_layout.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -60,5 +61,11 @@ int16_t RaceTrack_WorldToScreenY(const RaceTrack *track, int32_t world_y);
 
 // Return the start/finish line world-space position
 int32_t RaceTrack_GetStartFinishWorldY(const RaceTrack *track);
+
+const RaceTrackSegment *RaceTrack_GetCurrentSegment(const RaceTrack *track);
+const char *RaceTrack_GetCurrentCornerName(const RaceTrack *track);
+RaceSector RaceTrack_GetCurrentSector(const RaceTrack *track);
+bool RaceTrack_HasLeftCurbAtY(int32_t world_y);
+bool RaceTrack_HasRightCurbAtY(int32_t world_y);
 
 #endif
