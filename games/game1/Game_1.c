@@ -37,19 +37,13 @@ static void game1_update(void) {
   Game1_Input input = {0};
 
   Game1_Input_Read(&input);
+
   Game1_Player_Update(&player, input.dx, input.jump_pressed);
   Game1_Entities_Update(&player, input.interact_pressed);
+
   Game1_Camera_Update(&camera, player.x + (player.width / 2),
                       player.y + (player.height / 2), GAME1_WORLD_WIDTH_PX,
                       GAME1_WORLD_HEIGHT_PX);
-  
-  if (Game1_World_PlayerTouchesKey(&player)) {
-    uint16_t tile_x = (player.x + (player.width / 2)) / GAME1_TILE_SIZE;
-    uint16_t tile_y = (player.y + (player.height / 2)) / GAME1_TILE_SIZE;
-    // remove from world.
-    player.has_key = 1;
-    Game1_World_SetTile(tile_x, tile_y, TILE_EMPTY);
-  }
 }
 
 static void game1_render(void) {

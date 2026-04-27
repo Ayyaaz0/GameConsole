@@ -153,21 +153,3 @@ void Game1_World_SetCurrentRoom(uint8_t room_index) {
 }
 
 uint8_t Game1_World_GetCurrentRoom(void) { return current_room; }
-
-uint8_t Game1_World_PlayerTouchesKey(Game1_Player *player) {
-  /*
-   * Keys are now entity objects, not map tiles.
-   * This is temporarily here so older calls do not break compilation.
-   */
-  (void)player;
-  return 0;
-}
-
-void Game1_World_HandleTransition(Game1_Player *player, uint8_t interact_pressed) {
-  /*
-   * Door transitions are now handled by the entity system.
-   * Doors should be non-solid trigger entities, not world tiles.
-   */
-  (void)player;
-  (void)interact_pressed;
-}
