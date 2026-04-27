@@ -2,6 +2,7 @@
 
 #include "InputHandler.h"
 #include "LCD.h"
+#include "game3_attacks/game3_attacks.h"
 #include "game3_enemy/game3_enemy.h"
 #include "game3_input.h"
 #include "game3_enemy.h"
@@ -11,6 +12,7 @@
 #include "game3_world.h"
 #include "game3_ui.h"
 #include "stm32l4xx_hal.h"
+#include "game3_attacks.h"
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -26,6 +28,7 @@ extern ST7789V2_cfg_t cfg0;
 static bool game3_shutdown_requested = false;
 static Game3_Player player; 
 static Game3_Enemy enemy; 
+static Game3_Projectile projectile; 
 static Game3_Hud hud; 
 static uint32_t next_enemy_spawn_score = GAME3_ENEMY_SPAWN_SCORE_INTERVAL; 
 
@@ -40,6 +43,7 @@ static void game3_init(void) {
   Game3_World_Init();
   Game3_Player_Init(&player);
   Game3_Enemy_Init(&enemy);
+  Game3_Projectile_Init(&projectile);
 
   hud.max_health = 3; 
   hud.health = 3; 
@@ -48,8 +52,8 @@ static void game3_init(void) {
   hud.start_time_ms = HAL_GetTick(); 
   hud.is_game_over = 0; 
   hud.final_score = 0; 
-  hud.ability = 0; 
   hud.max_ability = GAME3_MAX_ABILITY; 
+  hud.ability = 0; 
 
   next_enemy_spawn_score = GAME3_ENEMY_SPAWN_SCORE_INTERVAL;
 
@@ -68,6 +72,7 @@ static void game3_update(void) {
 
   if (input.ability_pressed && hud.ability >= GAME3_ABILITY_COST) { 
     hud.ability = 0; 
+    Game3_Projectile_Fire(&projectile, &player);
   }
 
   Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx, input.attack_pressed);
@@ -104,6 +109,13 @@ static void game3_update(void) {
     Game3_Player_Take_Damage(&player, 1);
   }
 
+  Game3_Projectile_Update(&projectile); 
+
+  if (Game3_Projectile_Is_Touching_Enemy(&projectile, &enemy)) { 
+    Game3_Enemy_Take_Damage(&enemy, 3);
+    projectile.is_active = 0; 
+  }
+
 
   hud.health = player.health; 
   hud.max_health = player.max_health; 
@@ -130,6 +142,7 @@ static void game3_render(void) {
   Game3_Render_Draw_Player(&player);
   Game3_Render_Draw_Player_Attack(&player);
   Game3_Render_Draw_Enemy(&enemy);
+  Game3_Render_Draw_Projectile(&projectile);
   Game3_UI_Draw(&hud);
 
   LCD_Refresh(&cfg0);
