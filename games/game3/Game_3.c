@@ -31,6 +31,7 @@ extern ST7789V2_cfg_t cfg0;
 static bool game3_shutdown_requested = false;
 static Game3_Player player; 
 static Game3_Enemy enemy; 
+static Game3_ChargerEnemy charger_enemy; 
 static Game3_Projectile projectile; 
 static Game3_Hud hud; 
 static uint32_t next_enemy_spawn_score = GAME3_ENEMY_SPAWN_SCORE_INTERVAL; 
@@ -67,6 +68,7 @@ static void game3_init(void) {
   Game3_World_Init();
   Game3_Player_Init(&player);
   Game3_Enemy_Init(&enemy);
+  Game3_ChargerEnemy_Init(&charger_enemy);
   Game3_Projectile_Init(&projectile);
 
   armour_pack_active = 0; 
@@ -137,9 +139,18 @@ static void game3_update(void) {
     Game3_Player_Take_Damage(&player, 1);
   }
 
+  if (Game3_ChargerEnemy_Is_Touching_Player(&charger_enemy, &player)) { 
+    Game3_ChargerEnemy_Start_Attack_Hit(&charger_enemy);
+  }
+
   Game3_Enemy_Update(&enemy, &player);
+  Game3_ChargerEnemy_Update(&charger_enemy, &player);
 
   if (Game3_Enemy_Is_Touching_Player(&enemy, &player)) { 
+    Game3_Player_Take_Damage(&player, 1);
+  }
+
+  if (Game3_ChargerEnemy_Is_Touching_Player(&charger_enemy, &player)) { 
     Game3_Player_Take_Damage(&player, 1);
   }
 
@@ -183,6 +194,7 @@ static void game3_render(void) {
   Game3_Render_Draw_Player(&player);
   Game3_Render_Draw_Player_Attack(&player);
   Game3_Render_Draw_Enemy(&enemy);
+  Game3_Render_Draw_ChargerEnemy(&charger_enemy);
   Game3_Render_Draw_Projectile(&projectile);
   Game3_UI_Draw(&hud);
 

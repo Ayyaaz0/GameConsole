@@ -132,3 +132,13 @@ void Game3_Render_Draw_Armour_Pack(int16_t x, int16_t y, uint8_t is_active) {
 
     LCD_Draw_Rect(x, y, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, 1);
 }
+
+void Game3_Render_Draw_ChargerEnemy(const Game3_ChargerEnemy *enemy) { 
+    if (!Game3_ChargerEnemy_Is_Alive(enemy)) { 
+        return; 
+    }
+
+    uint8_t colour = Game3_ChargerEnemy_Is_Hit_Flashing(enemy) ? 2 : 8; 
+
+    LCD_Draw_Rect(enemy->x, enemy->y, enemy->width, enemy->height, colour, 1);
+}
