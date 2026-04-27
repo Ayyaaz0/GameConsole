@@ -8,5 +8,6 @@
 void Game1_Entities_Init(void);
 void Game1_Entities_Update(Game1_Player *player, uint8_t interact_pressed);
 void Game1_Entities_Render(const Game1_Camera *camera);
+void Game1_Entities_SpawnPlayer(Game1_Player *player);
 
 #endif

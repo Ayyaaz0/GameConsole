@@ -26,8 +26,8 @@ static void game1_init(void) {
   Game1_World_Init();
   Game1_Entities_Init();
   Game1_Player_Init(&player);
+  Game1_Entities_SpawnPlayer(&player);
   Game1_Camera_Init(&camera, 240, 240);
-  Game1_World_SpawnAtStart(&player);
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
