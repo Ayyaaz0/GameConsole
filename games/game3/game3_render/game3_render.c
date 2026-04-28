@@ -130,7 +130,7 @@ void Game3_Render_Draw_Armour_Pack(int16_t x, int16_t y, uint8_t is_active) {
         return; 
     }
 
-    LCD_Draw_Rect(x, y, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, 1);
+    LCD_Draw_Rect(x, y, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_COLOUR, 1);
 }
 
 static void Game3_Render_Draw_ChargerEnemy_Health_Bar(const Game3_ChargerEnemy *enemy) { 
