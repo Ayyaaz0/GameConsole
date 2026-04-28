@@ -456,7 +456,6 @@ uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy, const Gam
     }
 
     enemy->last_attack_hit_time_ms = now; 
-    enemy->hit_flash_end_time_ms = now + GAME3_CHARGER_HIT_FLASH_MS; 
 
     int16_t enemy_centre_x = Game3_ChargerEnemy_Get_Centre_X(enemy); 
     int16_t player_centre_x = Game3_ChargerEnemy_Get_Player_Centre_X(player);
