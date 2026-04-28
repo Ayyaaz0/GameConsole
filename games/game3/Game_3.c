@@ -140,17 +140,15 @@ static void game3_update(void) {
   }
 
   if (Game3_ChargerEnemy_Is_Touching_Player(&charger_enemy, &player)) { 
-    Game3_ChargerEnemy_Start_Attack_Hit(&charger_enemy);
+    if (Game3_ChargerEnemy_Start_Attack_Hit(&charger_enemy, &player)) { 
+      Game3_Player_Take_Damage(&player, 1);
+    }
   }
 
   Game3_Enemy_Update(&enemy, &player);
   Game3_ChargerEnemy_Update(&charger_enemy, &player);
 
   if (Game3_Enemy_Is_Touching_Player(&enemy, &player)) { 
-    Game3_Player_Take_Damage(&player, 1);
-  }
-
-  if (Game3_ChargerEnemy_Is_Touching_Player(&charger_enemy, &player)) { 
     Game3_Player_Take_Damage(&player, 1);
   }
 

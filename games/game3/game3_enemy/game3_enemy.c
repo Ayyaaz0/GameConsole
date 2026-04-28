@@ -22,6 +22,9 @@
 #define GAME3_CHARGER_HIT_FLASH_MS  200
 #define GAME3_CHARGER_ATTACK_COOLDOWN_MS    250
 
+#define GAME3_CHARGER_KNOCKBACK_DURATION_MS 150
+#define GAME3_CHARGER_KNOCKBACK_SPEED   3
+
 static int16_t Game3_Enemy_Get_Player_Centre_X(const Game3_Player *player) { 
     return player->x + (player->width / 2); 
 }
@@ -286,6 +289,11 @@ void Game3_ChargerEnemy_Init(Game3_ChargerEnemy *enemy) {
     enemy->charge_dx = 1; 
     enemy->charge_target_x = enemy->x; 
 
+    enemy->knockback_dx = 0; 
+    enemy->knockback_speed = GAME3_CHARGER_KNOCKBACK_SPEED; 
+    enemy->is_in_knockback = 0; 
+    enemy->knockback_end_time_ms = 0; 
+
     enemy->max_health = GAME3_CHARGER_START_HEALTH; 
     enemy->health = enemy->max_health; 
     enemy->is_alive = 1;
@@ -303,6 +311,17 @@ void Game3_ChargerEnemy_Update(Game3_ChargerEnemy *enemy, const Game3_Player *pl
     }
 
     uint32_t now = HAL_GetTick(); 
+
+    if (enemy->is_in_knockback) { 
+        if (now >= enemy->knockback_end_time_ms) { 
+            enemy->is_in_knockback = 0; 
+            enemy->knockback_dx = 0; 
+        } else { 
+            enemy->x += enemy->knockback_dx * enemy->knockback_speed; 
+            Game3_ChargerEnemy_Clamp_To_World(enemy);
+            return; 
+        }
+    }
 
     if (enemy->state == GAME3_CHARGER_STATE_IDLE) { 
         if (now >= enemy->state_end_time_ms) { 
@@ -425,7 +444,7 @@ uint8_t Game3_ChargerEnemy_Is_Touching_Player_Attack(const Game3_ChargerEnemy *e
     return 1; 
 }
 
-uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy) { 
+uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy, const Game3_Player *player) { 
     uint32_t now = HAL_GetTick(); 
 
     if (!enemy->is_alive) { 
@@ -438,6 +457,24 @@ uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy) {
 
     enemy->last_attack_hit_time_ms = now; 
     enemy->hit_flash_end_time_ms = now + GAME3_CHARGER_HIT_FLASH_MS; 
+
+    int16_t enemy_centre_x = Game3_ChargerEnemy_Get_Centre_X(enemy); 
+    int16_t player_centre_x = Game3_ChargerEnemy_Get_Player_Centre_X(player);
+
+    enemy->is_in_knockback = 1; 
+    enemy->knockback_end_time_ms = now + GAME3_CHARGER_KNOCKBACK_DURATION_MS; 
+
+    if (enemy_centre_x < player_centre_x) { 
+        enemy->knockback_dx = -2; 
+    } else { 
+        enemy->knockback_dx = 2;
+    }
+
+    enemy->state = GAME3_CHARGER_STATE_COOLDOWN; 
+    enemy->state_end_time_ms = now + GAME3_CHARGER_COOLDOWN_MS; 
+
+    enemy->x += enemy->knockback_dx * enemy->knockback_speed; 
+    Game3_ChargerEnemy_Clamp_To_World(enemy);
 
     return 1; 
 }

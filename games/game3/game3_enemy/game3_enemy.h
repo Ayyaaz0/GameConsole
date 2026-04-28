@@ -37,6 +37,11 @@ typedef struct {
     int16_t charge_dx; 
     int16_t charge_target_x; 
 
+    int16_t knockback_dx; 
+    int16_t knockback_speed; 
+    uint8_t is_in_knockback; 
+    uint32_t knockback_end_time_ms; 
+
     uint8_t width; 
     uint8_t height; 
 
@@ -70,7 +75,7 @@ void Game3_ChargerEnemy_Update(Game3_ChargerEnemy *enemy, const Game3_Player *pl
 uint8_t Game3_ChargerEnemy_Is_Touching_Player(const Game3_ChargerEnemy *enemy, const Game3_Player *player);
 uint8_t Game3_ChargerEnemy_Is_Touching_Player_Attack(const Game3_ChargerEnemy *enemy, const Game3_Player *player);
 
-uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy);
+uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy, const Game3_Player *player);
 void Game3_ChargerEnemy_Take_Damage(Game3_ChargerEnemy *enemy, uint8_t amount);
 
 uint8_t Game3_ChargerEnemy_Is_Alive(const Game3_ChargerEnemy *enemy);
