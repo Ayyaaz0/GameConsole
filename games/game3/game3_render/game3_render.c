@@ -133,6 +133,39 @@ void Game3_Render_Draw_Armour_Pack(int16_t x, int16_t y, uint8_t is_active) {
     LCD_Draw_Rect(x, y, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, GAME3_ARMOUR_PACK_SIZE, 1);
 }
 
+static void Game3_Render_Draw_ChargerEnemy_Health_Bar(const Game3_ChargerEnemy *enemy) { 
+    if (!Game3_ChargerEnemy_Is_Alive(enemy)) { 
+        return; 
+    }
+
+    if (enemy->max_health == 0) { 
+        return; 
+    }
+
+    int16_t bar_x = enemy->x + (enemy->width/2) - (GAME3_ENEMY_HEALTH_BAR_WIDTH / 2);
+    int16_t bar_y = enemy->y - GAME3_ENEMY_HEALTH_BAR_GAP - GAME3_ENEMY_HEALTH_BAR_HEIGHT; 
+
+    if (bar_x < 0) { 
+        bar_x = 0; 
+    }
+
+    if (bar_x > (GAME3_SCREEN_WIDTH - GAME3_ENEMY_HEALTH_BAR_WIDTH)) { 
+        bar_x = GAME3_SCREEN_WIDTH - GAME3_ENEMY_HEALTH_BAR_WIDTH; 
+    }
+
+    if (bar_y < 0) { 
+        bar_y = 0; 
+    }
+
+    uint8_t filled_width = (enemy->health * GAME3_ENEMY_HEALTH_BAR_WIDTH) / enemy->max_health; 
+
+    LCD_Draw_Rect(bar_x, bar_y, GAME3_ENEMY_HEALTH_BAR_WIDTH, GAME3_ENEMY_HEALTH_BAR_HEIGHT, GAME3_ENEMY_HEALTH_BAR_BG_COLOUR, 1);
+
+    if (filled_width > 0) { 
+        LCD_Draw_Rect(bar_x, bar_y, filled_width, GAME3_ENEMY_HEALTH_BAR_HEIGHT, GAME3_ENEMY_HEALTH_BAR_FILL_COLOUR, 1);
+    }
+}
+
 void Game3_Render_Draw_ChargerEnemy(const Game3_ChargerEnemy *enemy) { 
     if (!Game3_ChargerEnemy_Is_Alive(enemy)) { 
         return; 
@@ -141,4 +174,5 @@ void Game3_Render_Draw_ChargerEnemy(const Game3_ChargerEnemy *enemy) {
     uint8_t colour = Game3_ChargerEnemy_Is_Hit_Flashing(enemy) ? 2 : 8; 
 
     LCD_Draw_Rect(enemy->x, enemy->y, enemy->width, enemy->height, colour, 1);
+    Game3_Render_Draw_ChargerEnemy_Health_Bar(enemy); 
 }
