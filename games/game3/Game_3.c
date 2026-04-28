@@ -135,6 +135,18 @@ static void game3_update(void) {
     }
   } 
 
+  if (Game3_ChargerEnemy_Is_Touching_Player_Attack(&charger_enemy, &player)) {
+    if (Game3_ChargerEnemy_Start_Player_Attack_Knockback(&charger_enemy, &player)) { 
+      if (hud.ability < hud.max_ability) { 
+        hud.ability += GAME3_ABILITY_GAIN_ON_HIT; 
+
+        if (hud.ability > hud.max_ability) { 
+          hud.ability = hud.max_ability; 
+        }
+      }
+    }
+  }
+
   if (Game3_Enemy_Is_Touching_Player(&enemy, &player)) { 
     Game3_Player_Take_Damage(&player, 1);
   }

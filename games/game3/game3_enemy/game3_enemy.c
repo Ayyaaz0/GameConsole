@@ -13,7 +13,7 @@
 
 // CHARGER DEFINE
 
-#define GAME3_CHARGER_START_HEALTH  4
+#define GAME3_CHARGER_START_HEALTH  2
 #define GAME3_CHARGER_IDLE_MS   900
 #define GAME3_CHARGER_COOLDOWN_MS   700
 
@@ -477,6 +477,46 @@ uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy, const Gam
 
     return 1; 
 }
+
+uint8_t Game3_ChargerEnemy_Start_Player_Attack_Knockback(Game3_ChargerEnemy *enemy, const Game3_Player *player) {
+    uint32_t now = HAL_GetTick(); 
+
+    if (!enemy->is_alive) { 
+        return 0; 
+    }
+
+    if (enemy->last_attack_hit_time_ms != 0 && (now - enemy->last_attack_hit_time_ms) < GAME3_CHARGER_ATTACK_COOLDOWN_MS) { 
+        return 0; 
+    }
+
+    enemy->last_attack_hit_time_ms = now; 
+
+    Game3_ChargerEnemy_Take_Damage(enemy, 1);
+
+    if (!enemy->is_alive) { 
+        return 1; 
+    }
+
+    enemy->hit_flash_end_time_ms = now + GAME3_CHARGER_HIT_FLASH_MS; 
+
+    enemy->is_in_knockback = 1; 
+    enemy->knockback_end_time_ms = now + GAME3_CHARGER_KNOCKBACK_DURATION_MS; 
+
+    if (player->facing_dx < 0) { 
+        enemy->knockback_dx = -2; 
+    } else { 
+        enemy->knockback_dx = 2; 
+    }
+
+    enemy->state = GAME3_CHARGER_STATE_COOLDOWN; 
+    enemy->state_end_time_ms = now + GAME3_CHARGER_COOLDOWN_MS; 
+
+    enemy->x += enemy->knockback_dx * enemy->knockback_speed; 
+    Game3_ChargerEnemy_Clamp_To_World(enemy);
+
+    return 1; 
+}
+
 
 void Game3_ChargerEnemy_Take_Damage(Game3_ChargerEnemy *enemy, uint8_t amount) { 
     if (!enemy->is_alive) { 

@@ -73,9 +73,10 @@ void Game3_ChargerEnemy_Init(Game3_ChargerEnemy *enemy);
 void Game3_ChargerEnemy_Update(Game3_ChargerEnemy *enemy, const Game3_Player *player);
 
 uint8_t Game3_ChargerEnemy_Is_Touching_Player(const Game3_ChargerEnemy *enemy, const Game3_Player *player);
-uint8_t Game3_ChargerEnemy_Is_Touching_Player_Attack(const Game3_ChargerEnemy *enemy, const Game3_Player *player);
+uint8_t Game3_ChargerEnemy_Start_Player_Attack_Knockback(Game3_ChargerEnemy *enemy, const Game3_Player *player);
 
 uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy, const Game3_Player *player);
+uint8_t Game3_ChargerEnemy_Is_Touching_Player_Attack(const Game3_ChargerEnemy *enemy, const Game3_Player *player); 
 void Game3_ChargerEnemy_Take_Damage(Game3_ChargerEnemy *enemy, uint8_t amount);
 
 uint8_t Game3_ChargerEnemy_Is_Alive(const Game3_ChargerEnemy *enemy);
