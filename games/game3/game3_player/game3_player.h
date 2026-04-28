@@ -36,6 +36,7 @@ typedef struct {
 
 void Game3_Player_Init(Game3_Player *player);
 void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx, uint8_t attack_pressed);
+void Game3_Player_Gain_Armour(Game3_Player *player, uint8_t amount); 
 
 void Game3_Player_Take_Damage(Game3_Player *player, uint8_t amount);
 uint8_t Game3_Player_Is_Damage_Flashing(const Game3_Player *player);

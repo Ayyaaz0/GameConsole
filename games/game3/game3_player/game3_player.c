@@ -196,6 +196,18 @@ void Game3_Player_Take_Damage(Game3_Player *player, uint8_t amount) {
     player->damage_flash_end_time_ms = now + GAME3_PLAYER_DAMAGE_FLASH_MS;
 }
 
+void Game3_Player_Gain_Armour(Game3_Player *player, uint8_t amount) { 
+    if (player->armour >= player->max_armour) { 
+        return; 
+    }
+
+    player->armour += amount; 
+
+    if (player->armour > player->max_armour) { 
+        player->armour = player->max_armour; 
+    }
+}
+
 uint8_t Game3_Player_Is_Damage_Flashing(const Game3_Player *player) { 
     return HAL_GetTick() < player->damage_flash_end_time_ms;
 }
