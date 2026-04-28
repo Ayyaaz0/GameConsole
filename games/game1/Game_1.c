@@ -7,6 +7,7 @@
 #include "game1_player/game1_player.h"
 #include "game1_render/game1_render.h"
 #include "game1_world/game1_world.h"
+#include "game1_entities/game1_entities.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -23,9 +24,10 @@ static void game1_init(void) {
   LCD_Set_Palette(PALETTE_CHROMA);
 
   Game1_World_Init();
+  Game1_Entities_Init();
   Game1_Player_Init(&player);
+  Game1_Entities_SpawnPlayer(&player);
   Game1_Camera_Init(&camera, 240, 240);
-  Game1_World_SpawnAtStart(&player);
 
   LCD_Fill_Buffer(0);
   LCD_Refresh(&cfg0);
@@ -35,27 +37,20 @@ static void game1_update(void) {
   Game1_Input input = {0};
 
   Game1_Input_Read(&input);
-  Game1_Player_Update(&player, input.dx, input.jump_pressed);
 
-  Game1_World_HandleTransition(&player, input.interact_pressed);
+  Game1_Player_Update(&player, input.dx, input.jump_pressed);
+  Game1_Entities_Update(&player, input.interact_pressed);
 
   Game1_Camera_Update(&camera, player.x + (player.width / 2),
                       player.y + (player.height / 2), GAME1_WORLD_WIDTH_PX,
                       GAME1_WORLD_HEIGHT_PX);
-  
-  if (Game1_World_PlayerTouchesKey(&player)) {
-    uint16_t tile_x = (player.x + (player.width / 2)) / GAME1_TILE_SIZE;
-    uint16_t tile_y = (player.y + (player.height / 2)) / GAME1_TILE_SIZE;
-    // remove from world.
-    player.has_key = 1;
-    Game1_World_SetTile(tile_x, tile_y, TILE_EMPTY);
-  }
 }
 
 static void game1_render(void) {
   LCD_Fill_Buffer(0);
 
   Game1_Render_DrawWorld(&camera);
+  Game1_Entities_Render(&camera);
   Game1_Render_DrawPlayer(&player, &camera);
 
   LCD_Refresh(&cfg0);

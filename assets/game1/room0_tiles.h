@@ -3,12 +3,16 @@
 
 #include <stdint.h>
 
-#define ROOM0_TILES_COUNT 21
-#define ROOM0_TILES_ANIMATION_COUNT 1
-#define ROOM0_TILES_WIDTH 8
-#define ROOM0_TILES_HEIGHT 8
+#define ROOM0_TILES_COUNT 22
+#define ROOM0_TILES_ANIMATION_COUNT 0
 
-const uint8_t *Game1_Tiles_Find(uint16_t tiled_id);
-uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id, uint32_t frame_counter);
+typedef struct {
+  const uint8_t *pixels;
+  uint8_t width;
+  uint8_t height;
+} Game1_TileSprite;
 
-#endif // ROOM0_TILES_H
+const Game1_TileSprite *Game1_Tiles_Find(uint16_t tiled_id);
+uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id, uint32_t frame);
+
+#endif
