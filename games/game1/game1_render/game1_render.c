@@ -9,10 +9,14 @@
 
 static uint32_t animation_frame_counter = 0;
 
-static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const uint8_t *pixels) {
-  for (uint8_t y = 0; y < GAME1_TILE_SIZE; y++) {
-    for (uint8_t x = 0; x < GAME1_TILE_SIZE; x++) {
-      uint8_t colour = pixels[y * GAME1_TILE_SIZE + x];
+static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const Game1_TileSprite *sprite) {
+  if (sprite == 0 || sprite->pixels == 0) {
+    return;
+  }
+
+  for (uint8_t y = 0; y < sprite->height; y++) {
+    for (uint8_t x = 0; x < sprite->width; x++) {
+      uint8_t colour = sprite->pixels[y * sprite->width + x];
 
       if (colour == 0) {
         continue;
@@ -43,13 +47,12 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
         continue;
       }
 
-      uint16_t draw_tile =
-          Game1_Tiles_ResolveAnimation(tile, animation_frame);
+      uint16_t draw_tile = Game1_Tiles_ResolveAnimation(tile, animation_frame);
 
-      const uint8_t *pixels = Game1_Tiles_Find(draw_tile);
+      const Game1_TileSprite *sprite = Game1_Tiles_Find(tile);
 
-      if (pixels != 0) {
-        Game1_Render_DrawTile(screen_x, screen_y, pixels);
+      if (sprite != 0) {
+        Game1_Render_DrawTile(screen_x, screen_y, sprite);
       }
     }
   }

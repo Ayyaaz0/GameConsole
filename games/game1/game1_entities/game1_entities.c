@@ -2,11 +2,13 @@
 #include "LCD.h"
 #include "game1_world/game1_world.h"
 #include "room0_entities.h"
+#include "room0_tiles.h"
+
 #include <stdint.h>
 
 #define GAME1_MAX_DOORS 4
 #define GAME1_MAX_KEYS 4
-#define GAME1_DOOR_OPEN_TIME 30
+#define GAME1_DOOR_OPEN_TIME 8
 
 #define GAME1_ROOM0_INDEX 0
 
@@ -34,6 +36,10 @@ typedef struct {
   uint8_t key_id;
   Game1_DoorState state;
   uint8_t animation_timer;
+
+  uint16_t closed_gid;
+  uint16_t opening_gid;
+  uint16_t open_gid;
 } Game1_Door;
 
 typedef struct {
@@ -43,6 +49,8 @@ typedef struct {
   uint8_t h;
   uint8_t key_id;
   uint8_t active;
+
+  uint16_t sprite_gid;
 } Game1_Key;
 
 static Game1_Door doors[GAME1_MAX_DOORS];
@@ -76,6 +84,9 @@ static void Game1_Entities_LoadDoor(const Game1_Entity *entity) {
   door->key_id = entity->key_id;
   door->state = entity->locked ? DOOR_LOCKED : DOOR_CLOSED;
   door->animation_timer = 0;
+  door->closed_gid = entity->closed_gid;
+  door->opening_gid = entity->opening_gid;
+  door->open_gid = entity->open_gid;
 }
 
 static void Game1_Entities_LoadKey(const Game1_Entity *entity) {
@@ -87,6 +98,7 @@ static void Game1_Entities_LoadKey(const Game1_Entity *entity) {
   key->h = entity->h;
   key->key_id = entity->key_id;
   key->active = 1;
+  key->sprite_gid = entity->sprite_gid;
 }
 
 static void Game1_Entities_UpdateKeys(Game1_Player *player) {
@@ -106,16 +118,15 @@ static void Game1_Entities_EnterDoor(Game1_Player *player) {
   Game1_World_SpawnAtTile(player, GAME1_ROOM1_SPAWN_TILE_X, GAME1_ROOM1_SPAWN_TILE_Y);
 }
 
-// Takes player pointer to trigger EnterDoor automatically
-static void Game1_Entities_UpdateOpeningDoor(Game1_Door *door, Game1_Player *player) {
-  if (door->state != DOOR_OPENING) return;
+static void Game1_Entities_UpdateOpeningDoor(Game1_Door *door) {
+  if (door->state != DOOR_OPENING) {
+    return;
+  }
 
   door->animation_timer++;
 
   if (door->animation_timer >= GAME1_DOOR_OPEN_TIME) {
     door->state = DOOR_OPEN;
-    // Once animation finishes, move to next room
-    Game1_Entities_EnterDoor(player);
   }
 }
 
@@ -143,8 +154,7 @@ static void Game1_Entities_UpdateDoors(Game1_Player *player, uint8_t interact_pr
   for (uint8_t i = 0; i < door_count; i++) {
     Game1_Door *door = &doors[i];
 
-    // Pass the player to the timer update
-    Game1_Entities_UpdateOpeningDoor(door, player);
+    Game1_Entities_UpdateOpeningDoor(door);
 
     if (!interact_pressed) continue;
 
@@ -154,13 +164,39 @@ static void Game1_Entities_UpdateDoors(Game1_Player *player, uint8_t interact_pr
   }
 }
 
-static uint8_t Game1_Entities_GetDoorColour(const Game1_Door *door) {
+static uint16_t Game1_Entities_GetDoorGid(const Game1_Door *door) {
   switch (door->state) {
-    case DOOR_LOCKED:  return 2; 
-    case DOOR_CLOSED:  return 4; 
-    case DOOR_OPENING: return 5; 
-    case DOOR_OPEN:    return 1; 
-    default:           return 2;
+  case DOOR_LOCKED:
+  case DOOR_CLOSED:
+    return door->closed_gid;
+
+  case DOOR_OPENING:
+    return door->opening_gid;
+
+  case DOOR_OPEN:
+    return door->open_gid;
+
+  default:
+    return door->closed_gid;
+  }
+}
+
+static void Game1_Entities_DrawSprite(int16_t screen_x, int16_t screen_y,
+                                      const Game1_TileSprite *sprite) {
+  if (sprite == 0 || sprite->pixels == 0) {
+    return;
+  }
+
+  for (uint8_t y = 0; y < sprite->height; y++) {
+    for (uint8_t x = 0; x < sprite->width; x++) {
+      uint8_t colour = sprite->pixels[y * sprite->width + x];
+
+      if (colour == 0) {
+        continue;
+      }
+
+      LCD_Draw_Rect(screen_x + x, screen_y + y, 1, 1, colour, 1);
+    }
   }
 }
 
@@ -171,6 +207,7 @@ void Game1_Entities_Init(void) {
 
   for (uint16_t i = 0; i < room0_entity_count; i++) {
     const Game1_Entity *entity = &room0_entities[i];
+
     if (entity->type == ENTITY_SPAWN) {
       Game1_Entities_LoadSpawn(entity);
     } else if (entity->type == ENTITY_DOOR) {
@@ -182,29 +219,51 @@ void Game1_Entities_Init(void) {
 }
 
 void Game1_Entities_SpawnPlayer(Game1_Player *player) {
-  if (!has_spawn) return;
+  if (!has_spawn) {
+    return;
+  }
+
   player->x = spawn_x;
   player->y = spawn_y;
 }
 
 void Game1_Entities_Update(Game1_Player *player, uint8_t interact_pressed) {
-  if (!Game1_Entities_IsRoom0Active()) return;
+  if (!Game1_Entities_IsRoom0Active()) {
+    return;
+  }
+
   Game1_Entities_UpdateKeys(player);
   Game1_Entities_UpdateDoors(player, interact_pressed);
 }
 
 void Game1_Entities_Render(const Game1_Camera *camera) {
-  if (!Game1_Entities_IsRoom0Active()) return;
+  if (!Game1_Entities_IsRoom0Active()) {
+    return;
+  }
 
   for (uint8_t i = 0; i < key_count; i++) {
     const Game1_Key *key = &keys[i];
-    if (!key->active) continue;
-    LCD_Draw_Rect(key->x - camera->x, key->y - camera->y, key->w, key->h, 6, 1);
+
+    if (!key->active) {
+      continue;
+    }
+
+    int16_t screen_x = key->x - camera->x;
+    int16_t screen_y = key->y - camera->y;
+
+    const Game1_TileSprite *sprite = Game1_Tiles_Find(key->sprite_gid);
+    Game1_Entities_DrawSprite(screen_x, screen_y, sprite);
   }
 
   for (uint8_t i = 0; i < door_count; i++) {
     const Game1_Door *door = &doors[i];
-    uint8_t colour = Game1_Entities_GetDoorColour(door);
-    LCD_Draw_Rect(door->x - camera->x, door->y - camera->y, door->w, door->h, colour, 1);
+
+    int16_t screen_x = door->x - camera->x;
+    int16_t screen_y = door->y - camera->y;
+
+    uint16_t door_gid = Game1_Entities_GetDoorGid(door);
+    const Game1_TileSprite *sprite = Game1_Tiles_Find(door_gid);
+
+    Game1_Entities_DrawSprite(screen_x, screen_y, sprite);
   }
 }
