@@ -32,13 +32,20 @@
 #define GAME3_FLYING_START_HEALTH   2
 #define GAME3_FLYING_WIDTH  10
 #define GAME3_FLYING_HEIGHT 8
+
 #define GAME3_FLYING_SPEED  1
 #define GAME3_FLYING_SHOOT_INTERVAL_MS  1300
+
 #define GAME3_FLYING_PROJECTILE_SIZE    4
 #define GAME3_FLYING_PROJECTILE_SPEED_X   2
 #define GAME3_FLYING_PROJECTILE_SPEED_Y   2
+
 #define GAME3_FLYING_HIT_FLASH_MS   200
 #define GAME3_FLYING_ATTACK_COOLDOWN    250
+
+#define GAME3_FLYING_HOVER_ABOVE_PLAYER_PX  22
+#define GAME3_FLYING_FOLLOW_DEADZONE_PX 2
+
 
 static int16_t Game3_Enemy_Get_Player_Centre_X(const Game3_Player *player) { 
     return player->x + (player->width / 2); 
@@ -625,7 +632,7 @@ static void Game3_FlyingEnemy_Fire_Projectiles(Game3_FlyingEnemy *enemy) {
 
     enemy->projectiles[1].x = start_x; 
     enemy->projectiles[1].y = start_y; 
-    enemy->projectiles[1].vx = -GAME3_FLYING_PROJECTILE_SPEED_X; 
+    enemy->projectiles[1].vx = GAME3_FLYING_PROJECTILE_SPEED_X; 
     enemy->projectiles[1].vy = GAME3_FLYING_PROJECTILE_SPEED_Y; 
     enemy->projectiles[1].width = GAME3_FLYING_PROJECTILE_SIZE; 
     enemy->projectiles[1].height = GAME3_FLYING_PROJECTILE_SIZE; 
@@ -633,7 +640,7 @@ static void Game3_FlyingEnemy_Fire_Projectiles(Game3_FlyingEnemy *enemy) {
 }
 
 static void Game3_FlyingEnemy_Update_Projectile(Game3_FlyingEnemy *enemy) { 
-    for (uint8_t = 0; i < 2; i++) { 
+    for (uint8_t i = 0; i < 2; i++) { 
         Game3_FlyingProjectile *projectile = &enemy->projectiles[i]; 
 
         if (!projectile->is_active) { 
@@ -650,24 +657,39 @@ static void Game3_FlyingEnemy_Update_Projectile(Game3_FlyingEnemy *enemy) {
 }
 
 void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *player) { 
-    (void)player; 
-
     if (!enemy->is_alive) { 
         return; 
     }
 
     uint32_t now = HAL_GetTick(); 
 
-    enemy->x += enemy->move_dx * enemy->move_speed; 
+    int16_t player_centre_x = player->x + (player->width / 2); 
 
-    if (enemy->x <= GAME3_TILE_SIZE) { 
-        enemy->x = GAME3_TILE_SIZE; 
-        enemy->move_dx = 1; 
+    int16_t target_x = player_centre_x - (enemy->width / 2); 
+    int16_t target_y = player->y - GAME3_FLYING_HOVER_ABOVE_PLAYER_PX - enemy->height; 
+
+    if (target_y < GAME3_TILE_SIZE) { 
+        target_y = GAME3_TILE_SIZE; 
     }
 
-    if (enemy->x >= (GAME3_WORLD_WIDTH_PX - enemy->width - GAME3_TILE_SIZE)) { 
-        enemy->x = GAME3_WORLD_WIDTH_PX - enemy->width - GAME3_TILE_SIZE; 
-        enemy->move_dx = -1; 
+    if (target_x < 0) { 
+        target_x = 0; 
+    }
+
+    if (target_x > (GAME3_WORLD_WIDTH_PX - enemy->width)) { 
+        target_x = GAME3_WORLD_WIDTH_PX - enemy->width; 
+    }
+
+    if (enemy->x < target_x - GAME3_FLYING_FOLLOW_DEADZONE_PX) { 
+        enemy->x += enemy->move_speed;  
+    } else if (enemy->x > target_x + GAME3_FLYING_FOLLOW_DEADZONE_PX) { 
+        enemy->x -= enemy->move_speed; 
+    }
+
+    if (enemy->y < target_y - GAME3_FLYING_FOLLOW_DEADZONE_PX) { 
+        enemy->y += enemy->move_speed; 
+    } else if (enemy->y > target_y + GAME3_FLYING_FOLLOW_DEADZONE_PX) { 
+        enemy->y -= enemy->move_speed; 
     }
 
     if (now >= enemy->next_shot_time_ms) {
@@ -678,7 +700,7 @@ void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *play
     Game3_FlyingEnemy_Update_Projectile(enemy);
 }
 
-uint8_t Game3_FlyingEnemy_Is_Touching_Player(const Game3_FlyingEnemy *enemy, const Game3_Player *player) { 
+uint8_t Game3_FlyingEnemy_Is_Touching_Player_Attack(const Game3_FlyingEnemy *enemy, const Game3_Player *player) { 
     if (!enemy->is_alive) { 
         return 0; 
     }
@@ -710,6 +732,8 @@ uint8_t Game3_FlyingEnemy_Is_Touching_Player(const Game3_FlyingEnemy *enemy, con
 
 uint8_t Game3_FlyingEnemy_Start_Player_Attack(Game3_FlyingEnemy *enemy, const Game3_Player *player) { 
     (void)player; 
+
+    uint32_t now = HAL_GetTick();
 
     if (!enemy->is_alive) { 
         return 0; 
@@ -759,7 +783,7 @@ uint8_t Game3_FlyingEnemy_Projectile_Is_Touching_Player(const Game3_FlyingEnemy 
             continue; 
         }
 
-        if (Game3_AABB_Is_Touching(projectile->x, projectile->y, projectile->width, projectile->height, player->x, player->y, player->width, player->heught)) { 
+        if (Game3_AABB_Is_Touching(projectile->x, projectile->y, projectile->width, projectile->height, player->x, player->y, player->width, player->height)) { 
             return 1; 
         }
     }

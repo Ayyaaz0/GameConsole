@@ -15,5 +15,7 @@ void Game3_Render_Draw_Projectile(const Game3_Projectile *projectile, const Game
 void Game3_Render_Draw_Armour_Pack(int16_t x, int16_t y, uint8_t is_active, const Game3_Camera *camera);
 void Game3_Render_Draw_ChargerEnemy(const Game3_ChargerEnemy *enemy, const Game3_Camera *camera); 
 
+void Game3_Render_Draw_FlyingEnemy(const Game3_FlyingEnemy *enemy, const Game3_Camera *camera);
+
 #endif 
 
