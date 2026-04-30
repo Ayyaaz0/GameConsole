@@ -120,30 +120,32 @@ Written by Aeron Jarvis and James Avery
 // ===== Chroma Palette Colours =====
 
 // Greys
-#define RGB565_CHROMA_BLACK       0x6108  // #0d0d0d
-#define RGB565_CHROMA_GREY_DARK   0xC739  // #383838
-#define RGB565_CHROMA_GREY        0x694A  // #4f4f4f
-#define RGB565_CHROMA_GREY_LIGHT  0x1084  // #828282
-#define RGB565_CHROMA_GREY_PALE   0xB6B5  // #b5b5b5
-#define RGB565_CHROMA_WHITE       0xDBDE  // #d9d9d9
-
-// Greens
-#define RGB565_CHROMA_GREEN_DARK  0x2B2A  // #328c25
-#define RGB565_CHROMA_GREEN_LIGHT 0x7D4E  // #5de34a
-
-// Browns
-#define RGB565_CHROMA_BROWN_DARK  0x4512  // #4c2712
-#define RGB565_CHROMA_BROWN       0x6036  // #60361d
-#define RGB565_CHROMA_BROWN_LIGHT 0xA864  // #a86437
-#define RGB565_CHROMA_SAND        0xD77C  // #d77c40
-
-// Reds
-#define RGB565_CHROMA_RED         0xE64E  // #e64e35
-#define RGB565_CHROMA_RED_LIGHT   0xFB68  // #fb684f
+#define RGB565_CHROMA_BLACK       0x6108  // index 0  #0d0d0d
+#define RGB565_CHROMA_GREY_DARK   0xC739  // index 1  #383838
+#define RGB565_CHROMA_GREY        0x694A  // index 2  #4f4f4f
+#define RGB565_CHROMA_GREY_LIGHT  0x1084  // index 3  #828282
+#define RGB565_CHROMA_GREY_PALE   0xB6B5  // index 4  #b5b5b5
+#define RGB565_CHROMA_WHITE       0xDBDE  // index 5  #d9d9d9
 
 // Blues
-#define RGB565_CHROMA_BLUE        0x639B  // #639bff
-#define RGB565_CHROMA_CYAN        0x4DCC  // #4dcced
+#define RGB565_CHROMA_BLUE_DARK   0x2B2A  // index 6  #2a455a
+#define RGB565_CHROMA_BLUE        0xDF64  // index 7  #639bff
+
+// Reds
+#define RGB565_CHROMA_RED_DARK    0x1299  // index 8  #903122
+#define RGB565_CHROMA_RED         0x35E6  // index 9  #e64e35
+
+// Oranges
+#define RGB565_CHROMA_ORANGE_DARK 0x05B0  // index 10 #b04b05
+#define RGB565_CHROMA_ORANGE      0x29ED  // index 11 #ed7929
+
+// Brown / Yellow
+#define RGB565_CHROMA_BROWN       0x1B63  // index 12 #60361d
+#define RGB565_CHROMA_YELLOW      0x43FE  // index 13 #fdc443 / #fbca43
+
+// Greens
+#define RGB565_CHROMA_GREEN_DARK  0x2532  // index 14 #328c25
+#define RGB565_CHROMA_GREEN       0x4A5D  // index 15 #5de34a
 
 
 
