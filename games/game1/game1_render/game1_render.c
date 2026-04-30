@@ -49,7 +49,7 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
 
       uint16_t draw_tile = Game1_Tiles_ResolveAnimation(tile, animation_frame);
 
-      const Game1_TileSprite *sprite = Game1_Tiles_Find(tile);
+      const Game1_TileSprite *sprite = Game1_Tiles_Find(draw_tile);
 
       if (sprite != 0) {
         Game1_Render_DrawTile(screen_x, screen_y, sprite);
