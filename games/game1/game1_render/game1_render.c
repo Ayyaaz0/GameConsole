@@ -18,7 +18,7 @@ static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const Game
     for (uint8_t x = 0; x < sprite->width; x++) {
       uint8_t colour = sprite->pixels[y * sprite->width + x];
 
-      if (colour == 0) {
+      if (colour == 255) {
         continue;
       }
 
