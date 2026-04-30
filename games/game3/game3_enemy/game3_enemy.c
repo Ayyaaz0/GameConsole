@@ -172,51 +172,37 @@ void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player) {
     Game3_Enemy_Clamp_To_World(enemy);
 }
 
-uint8_t Game3_Enemy_Is_Touching_Player_Attack(const Game3_Enemy *enemy, const Game3_Player *player) { 
+uint8_t Game3_Enemy_Is_Touching_Player_Attack(const Game3_Enemy *enemy, const Game3_Player *player) {
 
-    if (!enemy->is_alive) { 
-        return 0; 
+    if (!enemy->is_alive) {
+        return 0;
     }
 
-    if (!Game3_Player_Is_Attacking(player)) { 
-        return 0; 
+    if (!Game3_Player_Is_Attacking(player)) {
+        return 0;
     }
 
-    int16_t attack_x; 
-
-    if (player->facing_dx < 0) { 
-        attack_x = player->x - GAME3_ATTACK_SIZE; 
-    } else { 
-        attack_x = player->x + player->width; 
-    }
-
-    int16_t attack_y = player->y; 
-
-    if (attack_x < 0) { 
-        attack_x = 0; 
-    }
-
-    if (attack_x > (GAME3_WORLD_WIDTH_PX - GAME3_ATTACK_SIZE)) { 
-        attack_x = GAME3_WORLD_WIDTH_PX - GAME3_ATTACK_SIZE; 
-    }   
+    int16_t attack_x;
+    int16_t attack_y;
+    Game3_Player_Get_Attack_Hitbox(player, &attack_x, &attack_y);
 
     if ((enemy->x + enemy->width) <= attack_x) {
-        return 0; 
+        return 0;
     }
 
-    if (enemy->x >= (attack_x + GAME3_ATTACK_SIZE)) { 
-        return 0; 
+    if (enemy->x >= (attack_x + GAME3_ATTACK_SIZE)) {
+        return 0;
     }
 
-    if ((enemy->y + enemy->height) <= attack_y) { 
-        return 0; 
+    if ((enemy->y + enemy->height) <= attack_y) {
+        return 0;
     }
 
     if (enemy->y >= (attack_y + GAME3_ATTACK_SIZE)) {
-        return 0; 
+        return 0;
     }
 
-    return 1; 
+    return 1;
 }
 
 uint8_t Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *player) { 
@@ -425,45 +411,31 @@ uint8_t Game3_ChargerEnemy_Is_Touching_Player_Attack(const Game3_ChargerEnemy *e
         return 0; 
     }
 
-    if (!Game3_Player_Is_Attacking(player)) { 
-        return 0; 
-    }
-
-    int16_t attack_x; 
-
-    if (player->facing_dx < 0) { 
-        attack_x = player->x - GAME3_ATTACK_SIZE; 
-    } else { 
-        attack_x = player->x + player->width; 
-    }
-
-    int16_t attack_y = player->y; 
-
-    if (attack_x < 0) { 
-        attack_x = 0; 
-    }
-
-    if (attack_x > (GAME3_WORLD_WIDTH_PX - GAME3_ATTACK_SIZE)) { 
-        attack_x = GAME3_WORLD_WIDTH_PX - GAME3_ATTACK_SIZE; 
-    }
-
-    if ((enemy->x + enemy->width) <= attack_x) { 
+    if (!Game3_Player_Is_Attacking(player)) {
         return 0;
     }
 
-    if (enemy->x >= (attack_x + GAME3_ATTACK_SIZE)) { 
-        return 0; 
-    }
+    int16_t attack_x;
+    int16_t attack_y;
+    Game3_Player_Get_Attack_Hitbox(player, &attack_x, &attack_y);
 
-    if ((enemy->y + enemy->height) <= attack_y) { 
-        return 0; 
-    }
-
-    if (enemy->y >= (attack_y + GAME3_ATTACK_SIZE)) { 
+    if ((enemy->x + enemy->width) <= attack_x) {
         return 0;
     }
 
-    return 1; 
+    if (enemy->x >= (attack_x + GAME3_ATTACK_SIZE)) {
+        return 0;
+    }
+
+    if ((enemy->y + enemy->height) <= attack_y) {
+        return 0;
+    }
+
+    if (enemy->y >= (attack_y + GAME3_ATTACK_SIZE)) {
+        return 0;
+    }
+
+    return 1;
 }
 
 uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy, const Game3_Player *player) { 
@@ -700,32 +672,18 @@ void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *play
     Game3_FlyingEnemy_Update_Projectile(enemy);
 }
 
-uint8_t Game3_FlyingEnemy_Is_Touching_Player_Attack(const Game3_FlyingEnemy *enemy, const Game3_Player *player) { 
-    if (!enemy->is_alive) { 
-        return 0; 
+uint8_t Game3_FlyingEnemy_Is_Touching_Player_Attack(const Game3_FlyingEnemy *enemy, const Game3_Player *player) {
+    if (!enemy->is_alive) {
+        return 0;
     }
 
-    if (!Game3_Player_Is_Attacking(player)) { 
-        return 0; 
+    if (!Game3_Player_Is_Attacking(player)) {
+        return 0;
     }
 
-    int16_t attack_x; 
-
-    if (player->facing_dx < 0) { 
-        attack_x = player->x - GAME3_ATTACK_SIZE; 
-    } else { 
-        attack_x = player->x + player->width; 
-    }
-
-    int16_t attack_y = player->y; 
-
-    if (attack_x < 0) { 
-        attack_x = 0; 
-    }
-
-    if (attack_x > (GAME3_WORLD_WIDTH_PX - GAME3_ATTACK_SIZE)) { 
-        attack_x = GAME3_WORLD_WIDTH_PX - GAME3_ATTACK_SIZE; 
-    }
+    int16_t attack_x;
+    int16_t attack_y;
+    Game3_Player_Get_Attack_Hitbox(player, &attack_x, &attack_y);
 
     return Game3_AABB_Is_Touching(enemy->x, enemy->y, enemy->width, enemy->height, attack_x, attack_y, GAME3_ATTACK_SIZE, GAME3_ATTACK_SIZE);
 }
