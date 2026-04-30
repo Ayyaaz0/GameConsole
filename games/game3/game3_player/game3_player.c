@@ -56,9 +56,10 @@ void Game3_Player_Init(Game3_Player *player) {
     player->dash_end_time_ms = 0; 
     player->last_dash_time_ms = 0;
 
-    player->is_attacking = 0; 
-    player->attack_end_time_ms = 0; 
-    player->facing_dx = 1; 
+    player->is_attacking = 0;
+    player->attack_end_time_ms = 0;
+    player->facing_dx = 1;
+    player->attack_dir_y = 0;
     
     player->max_health = GAME3_PLAYER_START_HEALTH; 
     player->health = player->max_health; 
@@ -70,22 +71,24 @@ void Game3_Player_Init(Game3_Player *player) {
     player->damage_flash_end_time_ms = 0; 
 }
 
-void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx, uint8_t attack_pressed) { 
-    uint32_t now = HAL_GetTick(); 
+void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx, uint8_t attack_pressed, uint8_t attack_up_held) {
+    uint32_t now = HAL_GetTick();
 
-    if (dx < 0) { 
-        player->facing_dx = -1; 
-    } else if (dx > 0) { 
-        player->facing_dx = 1; 
+    if (dx < 0) {
+        player->facing_dx = -1;
+    } else if (dx > 0) {
+        player->facing_dx = 1;
     }
 
-    if (attack_pressed) { 
-        player->is_attacking = 1; 
+    if (attack_pressed) {
+        player->is_attacking = 1;
         player->attack_end_time_ms = now + GAME3_PLAYER_ATTACK_DURATION;
+        player->attack_dir_y = attack_up_held ? -1 : 0;
     }
 
     if (player->is_attacking && now >= player->attack_end_time_ms) {
-        player->is_attacking = 0; 
+        player->is_attacking = 0;
+        player->attack_dir_y = 0;
     }
 
     player->is_grounded = Game3_Player_Is_On_Ground(player);
@@ -212,6 +215,37 @@ uint8_t Game3_Player_Is_Damage_Flashing(const Game3_Player *player) {
     return HAL_GetTick() < player->damage_flash_end_time_ms;
 }
 
-uint8_t Game3_Player_Is_Attacking(const Game3_Player *player) { 
+uint8_t Game3_Player_Is_Attacking(const Game3_Player *player) {
     return player->is_attacking;
+}
+
+void Game3_Player_Get_Attack_Hitbox(const Game3_Player *player, int16_t *out_x, int16_t *out_y) {
+    int16_t attack_x;
+    int16_t attack_y;
+
+    if (player->attack_dir_y < 0) {
+        attack_x = player->x + (player->width / 2) - (GAME3_PLAYER_ATTACK_SIZE / 2);
+        attack_y = player->y - GAME3_PLAYER_ATTACK_SIZE;
+    } else if (player->facing_dx < 0) {
+        attack_x = player->x - GAME3_PLAYER_ATTACK_SIZE;
+        attack_y = player->y;
+    } else {
+        attack_x = player->x + player->width;
+        attack_y = player->y;
+    }
+
+    if (attack_x < 0) {
+        attack_x = 0;
+    }
+
+    if (attack_x > (GAME3_WORLD_WIDTH_PX - GAME3_PLAYER_ATTACK_SIZE)) {
+        attack_x = GAME3_WORLD_WIDTH_PX - GAME3_PLAYER_ATTACK_SIZE;
+    }
+
+    if (attack_y < 0) {
+        attack_y = 0;
+    }
+
+    *out_x = attack_x;
+    *out_y = attack_y;
 }

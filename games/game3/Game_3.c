@@ -153,7 +153,7 @@ static void game3_update(void) {
     Game3_Projectile_Fire(&projectile, &player);
   }
 
-  Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx, input.attack_pressed);
+  Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx, input.attack_pressed, input.up_held);
   Game3_Camera_Update(&camera, &player);
 
   uint32_t current_score = Game3_Get_Current_Score();

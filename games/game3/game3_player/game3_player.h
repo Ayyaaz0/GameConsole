@@ -2,7 +2,9 @@
 #define GAME3_PLAYER_H
 
 
-#include <stdint.h> 
+#include <stdint.h>
+
+#define GAME3_PLAYER_ATTACK_SIZE 8
 
 typedef struct { 
     int16_t x; 
@@ -20,9 +22,10 @@ typedef struct {
     uint32_t last_dash_time_ms;
     int16_t dash_dx;  
 
-    uint8_t is_attacking; 
+    uint8_t is_attacking;
     uint32_t attack_end_time_ms;
-    int16_t facing_dx; 
+    int16_t facing_dx;
+    int8_t attack_dir_y;
 
     uint8_t health; 
     uint8_t max_health; 
@@ -35,11 +38,13 @@ typedef struct {
 } Game3_Player; 
 
 void Game3_Player_Init(Game3_Player *player);
-void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx, uint8_t attack_pressed);
-void Game3_Player_Gain_Armour(Game3_Player *player, uint8_t amount); 
+void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx, uint8_t attack_pressed, uint8_t attack_up_held);
+void Game3_Player_Gain_Armour(Game3_Player *player, uint8_t amount);
 
 void Game3_Player_Take_Damage(Game3_Player *player, uint8_t amount);
 uint8_t Game3_Player_Is_Damage_Flashing(const Game3_Player *player);
 uint8_t Game3_Player_Is_Attacking(const Game3_Player *player);
+
+void Game3_Player_Get_Attack_Hitbox(const Game3_Player *player, int16_t *out_x, int16_t *out_y);
 
 #endif
