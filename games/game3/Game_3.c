@@ -13,6 +13,7 @@
 #include "game3_ui.h"
 #include "stm32l4xx_hal.h"
 #include "game3_attacks.h"
+#include "game3_camera.h"
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -36,6 +37,7 @@ static Game3_ChargerEnemy charger_enemy;
 static Game3_Projectile projectile; 
 static Game3_Hud hud; 
 static uint32_t next_enemy_spawn_score = GAME3_ENEMY_SPAWN_SCORE_INTERVAL; 
+static Game3_Camera camera;
 
 static uint8_t armour_pack_active = 0; 
 static int16_t armour_pack_x = 0; 
@@ -109,6 +111,7 @@ static void game3_init(void) {
   
   Game3_World_Init();
   Game3_Player_Init(&player);
+  Game3_Camera_Init(&camera);
   Game3_Enemy_Init(&enemy);
   Game3_ChargerEnemy_Init(&charger_enemy);
   Game3_Projectile_Init(&projectile);
@@ -148,6 +151,7 @@ static void game3_update(void) {
   }
 
   Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx, input.attack_pressed);
+  Game3_Camera_Update(&camera, &player);
 
   uint32_t current_score = Game3_Get_Current_Score();
 
@@ -250,14 +254,13 @@ static void game3_render(void) {
     return; 
   }
 
-  Game3_Render_Draw_World();
-  Game3_Render_Draw_Armour_Pack(armour_pack_x, armour_pack_y, armour_pack_active);
-  Game3_Render_Draw_Player(&player);
-  Game3_Render_Draw_Player_Attack(&player);
-  Game3_Render_Draw_Enemy(&enemy);
-  Game3_Render_Draw_ChargerEnemy(&charger_enemy);
-  Game3_Render_Draw_Projectile(&projectile);
-  Game3_Render_Draw_Armour_Pack(armour_pack_x, armour_pack_y, armour_pack_active);
+  Game3_Render_Draw_World(&camera);
+  Game3_Render_Draw_Armour_Pack(armour_pack_x, armour_pack_y, armour_pack_active, &camera);
+  Game3_Render_Draw_Player(&player, &camera);
+  Game3_Render_Draw_Player_Attack(&player, &camera);
+  Game3_Render_Draw_Enemy(&enemy, &camera);
+  Game3_Render_Draw_ChargerEnemy(&charger_enemy, &camera);
+  Game3_Render_Draw_Projectile(&projectile, &camera);
   Game3_UI_Draw(&hud);
 
   LCD_Refresh(&cfg0);
