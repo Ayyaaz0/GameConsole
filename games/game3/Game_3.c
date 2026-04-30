@@ -43,6 +43,8 @@ static uint8_t armour_pack_active = 0;
 static int16_t armour_pack_x = 0; 
 static int16_t armour_pack_y = 0; 
 
+static Game3_FlyingEnemy flying_enemy; 
+
 static uint8_t Game3_Player_Is_Touching_Armour_Pack(const Game3_Player *player) { 
   if (!armour_pack_active) { 
     return 0; 
@@ -115,6 +117,7 @@ static void game3_init(void) {
   Game3_Enemy_Init(&enemy);
   Game3_ChargerEnemy_Init(&charger_enemy);
   Game3_Projectile_Init(&projectile);
+  Game3_FlyingEnemy_Init(&flying_enemy);
 
   armour_pack_active = 0; 
   armour_pack_x = 0; 
@@ -197,6 +200,23 @@ static void game3_update(void) {
     }
   }
 
+  if (Game3_FlyingEnemy_Is_Touching_Player_Attack(&flying_enemy, &player)) { 
+    uint8_t flying_was_alive = Game3_FlyingEnemy_Is_Alive(&flying_enemy);
+
+    if (Game3_FlyingEnemy_Start_Player_Attack(&flying_enemy, &player)) { 
+      if (hud.ability < hud.max_ability) { 
+        hud.ability += GAME3_ABILITY_GAIN_ON_HIT; 
+
+        if (hud.ability > hud.max_ability) { 
+          hud.ability = hud.max_ability; 
+        }
+      }
+      if (flying_was_alive && !Game3_FlyingEnemy_Is_Alive(&flying_enemy)) { 
+        // Armour Drop 
+      }
+    }
+  }
+
   if (Game3_Enemy_Is_Touching_Player(&enemy, &player)) { 
     Game3_Player_Take_Damage(&player, 1);
   }
@@ -207,8 +227,14 @@ static void game3_update(void) {
     }
   }
 
+  if (Game3_FlyingEnemy_Projectile_Is_Touching_Player(&flying_enemy, &player)) { 
+    Game3_Player_Take_Damage(&player, 1);
+    Game3_FlyingEnemy_Clear_Projectiles(&flying_enemy);
+  }
+
   Game3_Enemy_Update(&enemy, &player);
   Game3_ChargerEnemy_Update(&charger_enemy, &player);
+  Game3_FlyingEnemy_Update(&flying_enemy, &player);
 
   if (Game3_Enemy_Is_Touching_Player(&enemy, &player)) { 
     Game3_Player_Take_Damage(&player, 1);
@@ -260,6 +286,7 @@ static void game3_render(void) {
   Game3_Render_Draw_Player_Attack(&player, &camera);
   Game3_Render_Draw_Enemy(&enemy, &camera);
   Game3_Render_Draw_ChargerEnemy(&charger_enemy, &camera);
+  Game3_Render_Draw_FlyingEnemy(&flying_enemy, &camera);
   Game3_Render_Draw_Projectile(&projectile, &camera);
   Game3_UI_Draw(&hud);
 

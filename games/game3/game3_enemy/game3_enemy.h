@@ -56,6 +56,37 @@ typedef struct {
     uint32_t last_attack_hit_time_ms; 
 } Game3_ChargerEnemy; 
 
+typedef struct { 
+    int16_t x; 
+    int16_t y; 
+    int16_t vx; 
+    int16_t vy; 
+
+    uint8_t width; 
+    uint8_t height; 
+    uint8_t is_active; 
+} Game3_FlyingProjectile; 
+
+typedef struct { 
+    int16_t x; 
+    int16_t y; 
+    int16_t move_dx; 
+    int16_t move_speed; 
+
+    uint8_t width; 
+    uint8_t height; 
+
+    uint8_t health; 
+    uint8_t max_health;
+    uint8_t is_alive; 
+
+    uint32_t next_shot_time_ms; 
+    uint32_t hit_flash_end_time_ms; 
+    uint32_t last_attack_hit_time_ms; 
+
+    Game3_FlyingProjectile projectiles[2];
+} Game3_FlyingEnemy; 
+
 // BASIC ENEMY
 void Game3_Enemy_Init(Game3_Enemy *enemy); 
 void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player); 
@@ -81,5 +112,20 @@ void Game3_ChargerEnemy_Take_Damage(Game3_ChargerEnemy *enemy, uint8_t amount);
 
 uint8_t Game3_ChargerEnemy_Is_Alive(const Game3_ChargerEnemy *enemy);
 uint8_t Game3_ChargerEnemy_Is_Hit_Flashing(const Game3_ChargerEnemy *enemy);
+
+// FLYING ENEMY
+
+void Game3_FlyingEnemy_Init(Game3_FlyingEnemy *enemy); 
+void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *player); 
+
+uint8_t Game3_FlyingEnemy_Is_Alive(const Game3_FlyingEnemy *enemy);
+uint8_t Game3_FlyingEnemy_Is_Hit_Flashing(const Game3_FlyingEnemy *enemy);
+
+uint8_t Game3_FlyingEnemy_Is_Touching_Player_Attack(const Game3_FlyingEnemy *enemy, const Game3_Player *player);
+uint8_t Game3_FlyingEnemy_Start_Player_Attack(Game3_FlyingEnemy *enemy, const Game3_Player *player);
+void Game3_FlyingEnemy_Take_Damage(Game3_FlyingEnemy *enemy, uint8_t amount);
+
+uint8_t Game3_FlyingEnemy_Projectile_Is_Touching_Player(const Game3_FlyingEnemy *enemy, const Game3_Player *player);
+void Game3_FlyingEnemy_Clear_Projectiles(Game3_FlyingEnemy *enemy);
 
 #endif

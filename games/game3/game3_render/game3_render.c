@@ -210,3 +210,51 @@ void Game3_Render_Draw_ChargerEnemy(const Game3_ChargerEnemy *enemy, const Game3
     Game3_Render_Draw_Rect_Camera(enemy->x, enemy->y, enemy->width, enemy->height, colour, 1, camera);  
     Game3_Render_Draw_ChargerEnemy_Health_Bar(enemy, camera); 
 }
+
+static void Game3_Render_Draw_FlyingEnemy_Health_Bar(const Game3_FlyingEnemy *enemy, const Game3_Camera *camera) { 
+    if (!Game3_FlyingEnemy_Is_Alive(enemy)) { 
+        return; 
+    }
+
+    if (enemy->max_health == 0) { 
+        return; 
+    }
+
+    int16_t bar_x = enemy->x + (enemy->width / 2) - (GAME3_ENEMY_HEALTH_BAR_WIDTH / 2); 
+    int16_t bar_y = enemy->y - GAME3_ENEMY_HEALTH_BAR_GAP - GAME3_ENEMY_HEALTH_BAR_HEIGHT; 
+
+    if (bar_x < 0) { 
+        bar_x = 0; 
+    }
+
+    if (bar_y < 0) { 
+        bar_y = 0; 
+    }
+
+    uint8_t filled_width = (enemy->health * GAME3_ENEMY_HEALTH_BAR_WIDTH) / enemy->max_health; 
+
+    Game3_Render_Draw_Rect_Camera(bar_x, bar_y, GAME3_ENEMY_HEALTH_BAR_WIDTH, GAME3_ENEMY_HEALTH_BAR_HEIGHT, GAME3_ENEMY_HEALTH_BAR_BG_COLOUR, 1, camera);
+
+    if (filled_width > 0) { 
+        Game3_Render_Draw_Rect_Camera(bar_x, bar_y, filled_width, GAME3_ENEMY_HEALTH_BAR_HEIGHT, GAME3_ENEMY_HEALTH_BAR_FILL_COLOUR, 1, camera);
+    }
+}
+
+void Game3_Render_Draw_FlyingEnemy(const Game3_FlyingEnemy *enemy, const Game3_Camera *camera) { 
+    if (Game3_FlyingEnemy_Is_Alive(enemy)) { 
+        uint8_t colour = Game3_FlyingEnemy_Is_Hit_Flashing(enemy) ? 2 : 11; 
+
+        Game3_Render_Draw_Rect_Camera(enemy->x, enemy->y, enemy->width, enemy->height, colour, 1, camera);
+        Game3_Render_Draw_FlyingEnemy_Health_Bar(enemy, camera);
+    }
+
+    for (uint8_t i = 0; i < 2; i++) { 
+        const Game3_FlyingProjectile *projectile = &enemy->projectiles[i]; 
+
+        if (!projectile->is_active) { 
+            continue; 
+        }
+
+        Game3_Render_Draw_Rect_Camera(projectile->x, projectile->y, projectile->width, projectile->height, 6, 1, camera);
+    }
+}
