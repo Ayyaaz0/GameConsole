@@ -1,21 +1,26 @@
 #include "game1_entities.h"
-#include "LCD.h"
+
+#include "game1_animation.h"
 #include "game1_world/game1_world.h"
+
 #include "room0_entities.h"
 #include "room0_tiles.h"
+
+#include "LCD.h"
 
 #include <stdint.h>
 
 #define GAME1_MAX_DOORS 4
 #define GAME1_MAX_KEYS 4
-#define GAME1_DOOR_OPEN_TIME 8
 
 #define GAME1_ROOM0_INDEX 0
 
-// Target room settings
 #define GAME1_ROOM0_DOOR_TARGET_ROOM 1
 #define GAME1_ROOM1_SPAWN_TILE_X 2
 #define GAME1_ROOM1_SPAWN_TILE_Y 20
+
+#define GAME1_DOOR_FRAME_COUNT 3
+#define GAME1_DOOR_FRAME_SPEED 4
 
 static int16_t spawn_x = 0;
 static int16_t spawn_y = 0;
@@ -34,12 +39,16 @@ typedef struct {
   uint8_t w;
   uint8_t h;
   uint8_t key_id;
+
   Game1_DoorState state;
-  uint8_t animation_timer;
 
   uint16_t closed_gid;
   uint16_t opening_gid;
   uint16_t open_gid;
+
+  uint16_t open_frames[GAME1_DOOR_FRAME_COUNT];
+  Game1_Animation open_animation;
+  Game1_AnimationState animation_state;
 } Game1_Door;
 
 typedef struct {
@@ -63,7 +72,9 @@ static uint8_t Game1_Entities_IsRoom0Active(void) {
   return Game1_World_GetCurrentRoom() == GAME1_ROOM0_INDEX;
 }
 
-static uint8_t Game1_Entities_OverlapsPlayer(const Game1_Player *player, int16_t x, int16_t y, uint8_t w, uint8_t h) {
+static uint8_t Game1_Entities_OverlapsPlayer(const Game1_Player *player,
+                                             int16_t x, int16_t y, 
+                                             uint8_t w, uint8_t h) {
   return player->x < x + w && player->x + player->width > x &&
          player->y < y + h && player->y + player->height > y;
 }
@@ -75,23 +86,41 @@ static void Game1_Entities_LoadSpawn(const Game1_Entity *entity) {
 }
 
 static void Game1_Entities_LoadDoor(const Game1_Entity *entity) {
-  if (door_count >= GAME1_MAX_DOORS) return;
+  if (door_count >= GAME1_MAX_DOORS) {
+    return;
+  }
+
   Game1_Door *door = &doors[door_count++];
+
   door->x = entity->x;
   door->y = entity->y;
   door->w = entity->w;
   door->h = entity->h;
   door->key_id = entity->key_id;
-  door->state = entity->locked ? DOOR_LOCKED : DOOR_CLOSED;
-  door->animation_timer = 0;
+
   door->closed_gid = entity->closed_gid;
   door->opening_gid = entity->opening_gid;
   door->open_gid = entity->open_gid;
+
+  door->open_frames[0] = door->closed_gid;
+  door->open_frames[1] = door->opening_gid;
+  door->open_frames[2] = door->open_gid;
+
+  door->open_animation.frames = door->open_frames;
+  door->open_animation.frame_count = GAME1_DOOR_FRAME_COUNT;
+  door->open_animation.speed = GAME1_DOOR_FRAME_SPEED;
+
+  door->state = entity->locked ? DOOR_LOCKED : DOOR_CLOSED;
+  Game1_Animation_Init(&door->animation_state, &door->open_animation);
 }
 
 static void Game1_Entities_LoadKey(const Game1_Entity *entity) {
-  if (key_count >= GAME1_MAX_KEYS) return;
+  if (key_count >= GAME1_MAX_KEYS) {
+    return;
+  }
+
   Game1_Key *key = &keys[key_count++];
+
   key->x = entity->x;
   key->y = entity->y;
   key->w = entity->w;
@@ -104,7 +133,11 @@ static void Game1_Entities_LoadKey(const Game1_Entity *entity) {
 static void Game1_Entities_UpdateKeys(Game1_Player *player) {
   for (uint8_t i = 0; i < key_count; i++) {
     Game1_Key *key = &keys[i];
-    if (!key->active) continue;
+
+    if (!key->active) {
+      continue;
+    }
+
     if (Game1_Entities_OverlapsPlayer(player, key->x, key->y, key->w, key->h)) {
       player->has_key = 1;
       key->active = 0;
@@ -112,10 +145,14 @@ static void Game1_Entities_UpdateKeys(Game1_Player *player) {
   }
 }
 
-// Logic for changing the room
 static void Game1_Entities_EnterDoor(Game1_Player *player) {
   Game1_World_SetCurrentRoom(GAME1_ROOM0_DOOR_TARGET_ROOM);
   Game1_World_SpawnAtTile(player, GAME1_ROOM1_SPAWN_TILE_X, GAME1_ROOM1_SPAWN_TILE_Y);
+}
+
+static void Game1_Entities_StartDoorOpening(Game1_Door *door) {
+  door->state = DOOR_OPENING;
+  Game1_Animation_Init(&door->animation_state, &door->open_animation);
 }
 
 static void Game1_Entities_UpdateOpeningDoor(Game1_Door *door) {
@@ -123,25 +160,27 @@ static void Game1_Entities_UpdateOpeningDoor(Game1_Door *door) {
     return;
   }
 
-  door->animation_timer++;
+  Game1_Animation_Update(&door->animation_state);
 
-  if (door->animation_timer >= GAME1_DOOR_OPEN_TIME) {
+  if (door->animation_state.timer >=
+      door->open_animation.frame_count * door->open_animation.speed) {
     door->state = DOOR_OPEN;
   }
 }
 
 static void Game1_Entities_InteractDoor(Game1_Door *door, Game1_Player *player) {
   if (door->state == DOOR_LOCKED) {
-    if (!player->has_key) return;
+    if (!player->has_key) {
+      return;
+    }
+
     player->has_key = 0;
-    door->state = DOOR_OPENING;
-    door->animation_timer = 0;
+    Game1_Entities_StartDoorOpening(door);
     return;
   }
 
   if (door->state == DOOR_CLOSED) {
-    door->state = DOOR_OPENING;
-    door->animation_timer = 0;
+    Game1_Entities_StartDoorOpening(door);
     return;
   }
 
@@ -156,7 +195,9 @@ static void Game1_Entities_UpdateDoors(Game1_Player *player, uint8_t interact_pr
 
     Game1_Entities_UpdateOpeningDoor(door);
 
-    if (!interact_pressed) continue;
+    if (!interact_pressed) {
+      continue;
+    }
 
     if (Game1_Entities_OverlapsPlayer(player, door->x, door->y, door->w, door->h)) {
       Game1_Entities_InteractDoor(door, player);
@@ -165,24 +206,25 @@ static void Game1_Entities_UpdateDoors(Game1_Player *player, uint8_t interact_pr
 }
 
 static uint16_t Game1_Entities_GetDoorGid(const Game1_Door *door) {
-  switch (door->state) {
-  case DOOR_LOCKED:
-  case DOOR_CLOSED:
-    return door->closed_gid;
+  if (door->state == DOOR_OPENING) {
+    uint8_t frame_index =
+        door->animation_state.timer / door->open_animation.speed;
 
-  case DOOR_OPENING:
-    return door->opening_gid;
+    if (frame_index >= door->open_animation.frame_count) {
+      frame_index = door->open_animation.frame_count - 1;
+    }
 
-  case DOOR_OPEN:
-    return door->open_gid;
-
-  default:
-    return door->closed_gid;
+    return door->open_animation.frames[frame_index];
   }
+
+  if (door->state == DOOR_OPEN) {
+    return door->open_gid;
+  }
+
+  return door->closed_gid;
 }
 
-static void Game1_Entities_DrawSprite(int16_t screen_x, int16_t screen_y,
-                                      const Game1_TileSprite *sprite) {
+static void Game1_Entities_DrawSprite(int16_t screen_x, int16_t screen_y, const Game1_TileSprite *sprite) {
   if (sprite == 0 || sprite->pixels == 0) {
     return;
   }
@@ -248,22 +290,16 @@ void Game1_Entities_Render(const Game1_Camera *camera) {
       continue;
     }
 
-    int16_t screen_x = key->x - camera->x;
-    int16_t screen_y = key->y - camera->y;
-
     const Game1_TileSprite *sprite = Game1_Tiles_Find(key->sprite_gid);
-    Game1_Entities_DrawSprite(screen_x, screen_y, sprite);
+
+    Game1_Entities_DrawSprite(key->x - camera->x, key->y - camera->y, sprite);
   }
 
   for (uint8_t i = 0; i < door_count; i++) {
     const Game1_Door *door = &doors[i];
-
-    int16_t screen_x = door->x - camera->x;
-    int16_t screen_y = door->y - camera->y;
-
     uint16_t door_gid = Game1_Entities_GetDoorGid(door);
     const Game1_TileSprite *sprite = Game1_Tiles_Find(door_gid);
 
-    Game1_Entities_DrawSprite(screen_x, screen_y, sprite);
+    Game1_Entities_DrawSprite(door->x - camera->x, door->y - camera->y, sprite);
   }
 }
