@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define ROOM0_TILES_COUNT 25
-#define ROOM0_TILES_ANIMATION_COUNT 4
+#define ROOM0_TILES_COUNT 29
+#define ROOM0_TILES_ANIMATION_COUNT 5
 
 typedef struct {
   const uint8_t *pixels;
@@ -15,4 +15,4 @@ typedef struct {
 const Game1_TileSprite *Game1_Tiles_Find(uint16_t tiled_id);
 uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id, uint32_t frame_counter);
 
-#endif
+#endif 

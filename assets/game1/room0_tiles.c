@@ -349,6 +349,58 @@ static const uint8_t tile_24[] = {
 
 static const Game1_TileSprite sprite_24 = { tile_24, 8, 8 };
 
+static const uint8_t tile_25[] = {
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 13, 13, 13, 13, 255, 255, 255,
+  13, 255, 255, 255, 255, 13, 255, 255,
+  13, 255, 13, 13, 255, 13, 255, 255,
+  13, 255, 13, 13, 255, 13, 255, 255,
+  13, 255, 255, 255, 255, 13, 255, 255,
+  255, 13, 13, 13, 13, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_25 = { tile_25, 8, 8 };
+
+static const uint8_t tile_26[] = {
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+  255, 13, 255, 255, 13, 255, 255, 255,
+  255, 13, 13, 255, 13, 255, 255, 255,
+  255, 13, 13, 255, 13, 255, 255, 255,
+  255, 13, 255, 255, 13, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_26 = { tile_26, 8, 8 };
+
+static const uint8_t tile_27[] = {
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_27 = { tile_27, 8, 8 };
+
+static const uint8_t tile_28[] = {
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+  255, 13, 255, 255, 13, 255, 255, 255,
+  255, 13, 255, 13, 13, 255, 255, 255,
+  255, 13, 255, 13, 13, 255, 255, 255,
+  255, 13, 255, 255, 13, 255, 255, 255,
+  255, 255, 13, 13, 255, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_28 = { tile_28, 8, 8 };
+
 typedef struct {
   uint16_t id;
   const Game1_TileSprite *sprite;
@@ -380,6 +432,10 @@ static const TileEntry lookup[ROOM0_TILES_COUNT] = {
   { 30066, &sprite_22 },
   { 30067, &sprite_23 },
   { 30426, &sprite_24 },
+  { 30429, &sprite_25 },
+  { 30439, &sprite_26 },
+  { 30449, &sprite_27 },
+  { 30459, &sprite_28 },
 };
 
 const Game1_TileSprite *Game1_Tiles_Find(uint16_t tiled_id) {
@@ -396,6 +452,7 @@ static const uint16_t animation_0_frames[] = { 1723, 1745, 1767, 1789 };
 static const uint16_t animation_1_frames[] = { 3603, 3604 };
 static const uint16_t animation_2_frames[] = { 30065, 30066, 30067 };
 static const uint16_t animation_3_frames[] = { 30257, 30258, 30259, 30260 };
+static const uint16_t animation_4_frames[] = { 30429, 30439, 30449, 30459 };
 
 typedef struct {
   uint16_t id;
@@ -408,10 +465,10 @@ static const AnimationEntry animations[ROOM0_TILES_ANIMATION_COUNT] = {
   { 3603, 2, animation_1_frames },
   { 30065, 3, animation_2_frames },
   { 30257, 4, animation_3_frames },
+  { 30429, 4, animation_4_frames },
 };
 
-uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id,
-                                      uint32_t frame_counter) {
+uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id, uint32_t frame_counter) {
   for (uint16_t i = 0; i < ROOM0_TILES_ANIMATION_COUNT; i++) {
     if (animations[i].id == tiled_id) {
       uint8_t frame_index = frame_counter % animations[i].frame_count;
