@@ -2,6 +2,7 @@
 
 #include "game1_door.h"
 #include "game1_key.h"
+#include "game1_coin.h"
 #include "game1_world/game1_world.h"
 
 #include "room0_entities.h"
@@ -29,6 +30,7 @@ void Game1_Entities_Init(void) {
 
   Game1_Key_Reset();
   Game1_Door_Reset();
+  Game1_Coin_Reset();
 
   for (uint16_t i = 0; i < room0_entity_count; i++) {
     const Game1_Entity *entity = &room0_entities[i];
@@ -39,6 +41,8 @@ void Game1_Entities_Init(void) {
       Game1_Key_Load(entity);
     } else if (entity->type == ENTITY_DOOR) {
       Game1_Door_Load(entity);
+    } else if (entity->type == ENTITY_COIN) {
+      Game1_Coin_Load(entity);
     }
   }
 }
@@ -59,6 +63,7 @@ void Game1_Entities_Update(Game1_Player *player, uint8_t interact_pressed) {
 
   Game1_Key_UpdateAll(player);
   Game1_Door_UpdateAll(player, interact_pressed);
+  Game1_Coin_UpdateAll(player);
 }
 
 void Game1_Entities_Render(const Game1_Camera *camera) {
@@ -68,4 +73,5 @@ void Game1_Entities_Render(const Game1_Camera *camera) {
 
   Game1_Key_RenderAll(camera);
   Game1_Door_RenderAll(camera);
+  Game1_Coin_RenderAll(camera);
 }

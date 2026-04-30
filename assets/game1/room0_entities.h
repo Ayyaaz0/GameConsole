@@ -3,13 +3,14 @@
 
 #include <stdint.h>
 
-#define ROOM0_ENTITY_COUNT 3
+#define ROOM0_ENTITY_COUNT 7
 
 typedef enum {
   ENTITY_UNKNOWN,
   ENTITY_SPAWN,
   ENTITY_KEY,
-  ENTITY_DOOR
+  ENTITY_DOOR,
+  ENTITY_COIN
 } Game1_EntityType;
 
 typedef struct {
@@ -24,9 +25,10 @@ typedef struct {
   uint16_t closed_gid;
   uint16_t opening_gid;
   uint16_t open_gid;
+  uint8_t value;
 } Game1_Entity;
 
 extern const Game1_Entity room0_entities[];
 extern const uint16_t room0_entity_count;
 
-#endif 
+#endif
