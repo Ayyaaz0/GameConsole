@@ -125,30 +125,16 @@ void Game3_Render_Draw_Enemy(const Game3_Enemy *enemy, const Game3_Camera *camer
     Game3_Render_Draw_Enemy_Health_Bar(enemy, camera);
 }
 
-void Game3_Render_Draw_Player_Attack(const Game3_Player *player, const Game3_Camera *camera) { 
-    if (!Game3_Player_Is_Attacking(player)) { 
-        return; 
+void Game3_Render_Draw_Player_Attack(const Game3_Player *player, const Game3_Camera *camera) {
+    if (!Game3_Player_Is_Attacking(player)) {
+        return;
     }
 
-    int16_t attack_x; 
+    int16_t attack_x;
+    int16_t attack_y;
+    Game3_Player_Get_Attack_Hitbox(player, &attack_x, &attack_y);
 
-    if (player->facing_dx < 0) { 
-        attack_x = player->x - GAME3_ATTACK_SIZE; 
-    } else { 
-        attack_x = player->x + player->width; 
-    }
-
-    int16_t attack_y = player->y; 
-
-    if (attack_x < 0) { 
-        attack_x = 0; 
-    }
-
-    if (attack_x > (GAME3_WORLD_WIDTH_PX - GAME3_ATTACK_SIZE)) { 
-        attack_x = GAME3_WORLD_WIDTH_PX - GAME3_ATTACK_SIZE; 
-    }
-
-    Game3_Render_Draw_Rect_Camera(attack_x, attack_y, GAME3_ATTACK_SIZE, GAME3_ATTACK_SIZE, GAME3_ATTACK_COLOUR, 1, camera);  
+    Game3_Render_Draw_Rect_Camera(attack_x, attack_y, GAME3_ATTACK_SIZE, GAME3_ATTACK_SIZE, GAME3_ATTACK_COLOUR, 1, camera);
 }
 
 void Game3_Render_Draw_Projectile(const Game3_Projectile *projectile, const Game3_Camera *camera) { 

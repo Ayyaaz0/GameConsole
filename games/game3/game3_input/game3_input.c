@@ -29,12 +29,13 @@ void Game3_Input_Read(Game3_Input *input) {
 
     uint32_t now = HAL_GetTick();
 
-    input->dx = 0; 
-    input->jump_pressed = 0; 
-    input->dash_pressed = 0; 
-    input->dash_dx = 0; 
-    input->attack_pressed = 0; 
-    input->ability_pressed = 0; 
+    input->dx = 0;
+    input->jump_pressed = 0;
+    input->dash_pressed = 0;
+    input->dash_dx = 0;
+    input->attack_pressed = 0;
+    input->ability_pressed = 0;
+    input->up_held = 0;
 
     Joystick_Read(&joystick_cfg, &joystick_data);
 
@@ -61,8 +62,9 @@ void Game3_Input_Read(Game3_Input *input) {
             break; 
     }
 
-    if (joystick_data.direction == N || joystick_data.direction == NE || joystick_data.direction == NW) { 
-        jump_held = 1; 
+    if (joystick_data.direction == N || joystick_data.direction == NE || joystick_data.direction == NW) {
+        jump_held = 1;
+        input->up_held = 1;
     }
 
     input->jump_pressed = (jump_held && !last_jump_held) ? 1 : 0; 
