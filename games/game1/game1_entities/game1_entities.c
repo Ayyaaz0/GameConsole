@@ -1,17 +1,18 @@
 #include "game1_entities.h"
 #include "game1_entity_common.h"
+
 #include "game1_animation.h"
+
 #include "game1_world/game1_world.h"
+
+#include "game1_key.h"
 
 #include "room0_entities.h"
 #include "room0_tiles.h"
 
-#include "LCD.h"
-
 #include <stdint.h>
 
 #define GAME1_MAX_DOORS 4
-#define GAME1_MAX_KEYS 4
 
 #define GAME1_ROOM0_INDEX 0
 
@@ -51,22 +52,8 @@ typedef struct {
   Game1_AnimationState animation_state;
 } Game1_Door;
 
-typedef struct {
-  int16_t x;
-  int16_t y;
-  uint8_t w;
-  uint8_t h;
-  uint8_t key_id;
-  uint8_t active;
-
-  uint16_t sprite_gid;
-} Game1_Key;
-
 static Game1_Door doors[GAME1_MAX_DOORS];
 static uint8_t door_count = 0;
-
-static Game1_Key keys[GAME1_MAX_KEYS];
-static uint8_t key_count = 0;
 
 static uint8_t Game1_Entities_IsRoom0Active(void) {
   return Game1_World_GetCurrentRoom() == GAME1_ROOM0_INDEX;
@@ -105,37 +92,6 @@ static void Game1_Entities_LoadDoor(const Game1_Entity *entity) {
 
   door->state = entity->locked ? DOOR_LOCKED : DOOR_CLOSED;
   Game1_Animation_Init(&door->animation_state, &door->open_animation);
-}
-
-static void Game1_Entities_LoadKey(const Game1_Entity *entity) {
-  if (key_count >= GAME1_MAX_KEYS) {
-    return;
-  }
-
-  Game1_Key *key = &keys[key_count++];
-
-  key->x = entity->x;
-  key->y = entity->y;
-  key->w = entity->w;
-  key->h = entity->h;
-  key->key_id = entity->key_id;
-  key->active = 1;
-  key->sprite_gid = entity->sprite_gid;
-}
-
-static void Game1_Entities_UpdateKeys(Game1_Player *player) {
-  for (uint8_t i = 0; i < key_count; i++) {
-    Game1_Key *key = &keys[i];
-
-    if (!key->active) {
-      continue;
-    }
-
-    if (Game1_Entity_OverlapsPlayer(player, key->x, key->y, key->w, key->h)) {
-      player->has_key = 1;
-      key->active = 0;
-    }
-  }
 }
 
 static void Game1_Entities_EnterDoor(Game1_Player *player) {
@@ -220,7 +176,7 @@ static uint16_t Game1_Entities_GetDoorGid(const Game1_Door *door) {
 void Game1_Entities_Init(void) {
   has_spawn = 0;
   door_count = 0;
-  key_count = 0;
+  Game1_Key_Reset();
 
   for (uint16_t i = 0; i < room0_entity_count; i++) {
     const Game1_Entity *entity = &room0_entities[i];
@@ -230,7 +186,7 @@ void Game1_Entities_Init(void) {
     } else if (entity->type == ENTITY_DOOR) {
       Game1_Entities_LoadDoor(entity);
     } else if (entity->type == ENTITY_KEY) {
-      Game1_Entities_LoadKey(entity);
+      Game1_Key_Load(entity);
     }
   }
 }
@@ -249,7 +205,7 @@ void Game1_Entities_Update(Game1_Player *player, uint8_t interact_pressed) {
     return;
   }
 
-  Game1_Entities_UpdateKeys(player);
+  Game1_Key_UpdateAll(player);
   Game1_Entities_UpdateDoors(player, interact_pressed);
 }
 
@@ -258,17 +214,7 @@ void Game1_Entities_Render(const Game1_Camera *camera) {
     return;
   }
 
-  for (uint8_t i = 0; i < key_count; i++) {
-    const Game1_Key *key = &keys[i];
-
-    if (!key->active) {
-      continue;
-    }
-
-    const Game1_TileSprite *sprite = Game1_Tiles_Find(key->sprite_gid);
-
-    Game1_Entity_DrawSprite(key->x - camera->x, key->y - camera->y, sprite);
-  }
+  Game1_Key_RenderAll(camera);
 
   for (uint8_t i = 0; i < door_count; i++) {
     const Game1_Door *door = &doors[i];
