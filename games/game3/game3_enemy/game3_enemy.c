@@ -103,25 +103,31 @@ static void Game3_Enemy_Clamp_To_World(Game3_Enemy *enemy) {
     }
 }
 
-void Game3_Enemy_Init(Game3_Enemy *enemy) { 
-    enemy->width = 8; 
-    enemy->height = 8; 
-    enemy->move_speed = 1; 
+void Game3_Enemy_Spawn(Game3_Enemy *enemy, int16_t x, int16_t y) {
+    enemy->width = 8;
+    enemy->height = 8;
+    enemy->move_speed = 1;
     enemy->knockback_speed = 3;
-    enemy->knockback_dx = 0;  
+    enemy->knockback_dx = 0;
 
-    enemy->x = 20 * GAME3_TILE_SIZE; 
-    enemy->y = ((GAME3_ROOM_HEIGHT - 2) * GAME3_TILE_SIZE) - enemy->height; 
+    enemy->x = x;
+    enemy->y = y;
 
-    enemy->is_in_knockback = 0; 
-    enemy->knockback_end_time_ms = 0; 
+    enemy->is_in_knockback = 0;
+    enemy->knockback_end_time_ms = 0;
 
-    enemy->hit_flash_end_time_ms = 0; 
-    enemy->last_attack_hit_time_ms = 0; 
+    enemy->hit_flash_end_time_ms = 0;
+    enemy->last_attack_hit_time_ms = 0;
 
-    enemy->max_health = GAME3_ENEMY_START_HEALTH; 
-    enemy->health = enemy->max_health; 
-    enemy->is_alive = 1; 
+    enemy->max_health = GAME3_ENEMY_START_HEALTH;
+    enemy->health = enemy->max_health;
+    enemy->is_alive = 1;
+}
+
+void Game3_Enemy_Init(Game3_Enemy *enemy) {
+    int16_t default_x = 20 * GAME3_TILE_SIZE;
+    int16_t default_y = ((GAME3_ROOM_HEIGHT - 2) * GAME3_TILE_SIZE) - 8;
+    Game3_Enemy_Spawn(enemy, default_x, default_y);
 }
 
 void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player) { 
@@ -287,30 +293,36 @@ static void Game3_ChargerEnemy_Clamp_To_World(Game3_ChargerEnemy *enemy) {
     }
 }
 
-void Game3_ChargerEnemy_Init(Game3_ChargerEnemy *enemy) { 
-    enemy->width = 10; 
-    enemy->height = 10; 
+void Game3_ChargerEnemy_Spawn(Game3_ChargerEnemy *enemy, int16_t x, int16_t y) {
+    enemy->width = 10;
+    enemy->height = 10;
 
-    enemy->x = 10 * GAME3_TILE_SIZE; 
-    enemy->y = ((GAME3_ROOM_HEIGHT - 2) * GAME3_TILE_SIZE) - enemy->height; 
+    enemy->x = x;
+    enemy->y = y;
 
-    enemy->charge_dx = 1; 
-    enemy->charge_target_x = enemy->x; 
+    enemy->charge_dx = 1;
+    enemy->charge_target_x = enemy->x;
 
-    enemy->knockback_dx = 0; 
-    enemy->knockback_speed = GAME3_CHARGER_KNOCKBACK_SPEED; 
-    enemy->is_in_knockback = 0; 
-    enemy->knockback_end_time_ms = 0; 
+    enemy->knockback_dx = 0;
+    enemy->knockback_speed = GAME3_CHARGER_KNOCKBACK_SPEED;
+    enemy->is_in_knockback = 0;
+    enemy->knockback_end_time_ms = 0;
 
-    enemy->max_health = GAME3_CHARGER_START_HEALTH; 
-    enemy->health = enemy->max_health; 
+    enemy->max_health = GAME3_CHARGER_START_HEALTH;
+    enemy->health = enemy->max_health;
     enemy->is_alive = 1;
 
     enemy->state = GAME3_CHARGER_STATE_IDLE;
-    enemy->state_end_time_ms = HAL_GetTick() + GAME3_CHARGER_IDLE_MS; 
+    enemy->state_end_time_ms = HAL_GetTick() + GAME3_CHARGER_IDLE_MS;
 
-    enemy->hit_flash_end_time_ms = 0; 
-    enemy->last_attack_hit_time_ms = 0; 
+    enemy->hit_flash_end_time_ms = 0;
+    enemy->last_attack_hit_time_ms = 0;
+}
+
+void Game3_ChargerEnemy_Init(Game3_ChargerEnemy *enemy) {
+    int16_t default_x = 10 * GAME3_TILE_SIZE;
+    int16_t default_y = ((GAME3_ROOM_HEIGHT - 2) * GAME3_TILE_SIZE) - 10;
+    Game3_ChargerEnemy_Spawn(enemy, default_x, default_y);
 }
 
 void Game3_ChargerEnemy_Update(Game3_ChargerEnemy *enemy, const Game3_Player *player) { 
@@ -569,25 +581,29 @@ void Game3_FlyingEnemy_Clear_Projectiles(Game3_FlyingEnemy *enemy) {
     }
 }
 
-void Game3_FlyingEnemy_Init(Game3_FlyingEnemy *enemy) { 
-    enemy->width = GAME3_FLYING_WIDTH; 
-    enemy->height = GAME3_FLYING_HEIGHT; 
+void Game3_FlyingEnemy_Spawn(Game3_FlyingEnemy *enemy, int16_t x, int16_t y) {
+    enemy->width = GAME3_FLYING_WIDTH;
+    enemy->height = GAME3_FLYING_HEIGHT;
 
-    enemy->x = 15 * GAME3_TILE_SIZE; 
-    enemy->y = 6 * GAME3_TILE_SIZE; 
+    enemy->x = x;
+    enemy->y = y;
 
-    enemy->move_dx = 1; 
-    enemy->move_speed = GAME3_FLYING_SPEED; 
+    enemy->move_dx = 1;
+    enemy->move_speed = GAME3_FLYING_SPEED;
 
     enemy->max_health = GAME3_FLYING_START_HEALTH;
-    enemy->health = enemy->max_health; 
-    enemy->is_alive = 1; 
+    enemy->health = enemy->max_health;
+    enemy->is_alive = 1;
 
-    enemy->next_shot_time_ms = HAL_GetTick() + GAME3_FLYING_SHOOT_INTERVAL_MS; 
-    enemy->hit_flash_end_time_ms = 0; 
-    enemy->last_attack_hit_time_ms = 0; 
+    enemy->next_shot_time_ms = HAL_GetTick() + GAME3_FLYING_SHOOT_INTERVAL_MS;
+    enemy->hit_flash_end_time_ms = 0;
+    enemy->last_attack_hit_time_ms = 0;
 
     Game3_FlyingEnemy_Clear_Projectiles(enemy);
+}
+
+void Game3_FlyingEnemy_Init(Game3_FlyingEnemy *enemy) {
+    Game3_FlyingEnemy_Spawn(enemy, 15 * GAME3_TILE_SIZE, 6 * GAME3_TILE_SIZE);
 }
 
 static void Game3_FlyingEnemy_Fire_Projectiles(Game3_FlyingEnemy *enemy) { 

@@ -1,8 +1,12 @@
 #ifndef GAME3_ENEMY_H
 #define GAME3_ENEMY_H
 
-#include <stdint.h> 
+#include <stdint.h>
 #include "game3_player.h"
+
+#define GAME3_MAX_BASIC_ENEMIES   6
+#define GAME3_MAX_CHARGER_ENEMIES 3
+#define GAME3_MAX_FLYING_ENEMIES  2
 
 typedef struct { 
     int16_t x; 
@@ -88,7 +92,8 @@ typedef struct {
 } Game3_FlyingEnemy; 
 
 // BASIC ENEMY
-void Game3_Enemy_Init(Game3_Enemy *enemy); 
+void Game3_Enemy_Init(Game3_Enemy *enemy);
+void Game3_Enemy_Spawn(Game3_Enemy *enemy, int16_t x, int16_t y);
 void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player); 
 uint8_t Game3_Enemy_Is_Touching_Player(const Game3_Enemy *enemy, const Game3_Player *player); 
 uint8_t Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Player *player);
@@ -101,6 +106,7 @@ uint8_t Game3_Enemy_Is_Alive(const Game3_Enemy *enemy);
 
 // CHARGER ENEMY
 void Game3_ChargerEnemy_Init(Game3_ChargerEnemy *enemy);
+void Game3_ChargerEnemy_Spawn(Game3_ChargerEnemy *enemy, int16_t x, int16_t y);
 void Game3_ChargerEnemy_Update(Game3_ChargerEnemy *enemy, const Game3_Player *player);
 
 uint8_t Game3_ChargerEnemy_Is_Touching_Player(const Game3_ChargerEnemy *enemy, const Game3_Player *player);
@@ -115,8 +121,9 @@ uint8_t Game3_ChargerEnemy_Is_Hit_Flashing(const Game3_ChargerEnemy *enemy);
 
 // FLYING ENEMY
 
-void Game3_FlyingEnemy_Init(Game3_FlyingEnemy *enemy); 
-void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *player); 
+void Game3_FlyingEnemy_Init(Game3_FlyingEnemy *enemy);
+void Game3_FlyingEnemy_Spawn(Game3_FlyingEnemy *enemy, int16_t x, int16_t y);
+void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *player);
 
 uint8_t Game3_FlyingEnemy_Is_Alive(const Game3_FlyingEnemy *enemy);
 uint8_t Game3_FlyingEnemy_Is_Hit_Flashing(const Game3_FlyingEnemy *enemy);
