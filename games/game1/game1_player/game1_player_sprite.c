@@ -18,6 +18,7 @@
 #define HERO_DEATH_2_GID 30815
 
 static uint32_t animation_counter = 0;
+static uint8_t facing_left = 0;
 
 static const uint16_t idle_frames[] = {
     HERO_IDLE_0_GID,
@@ -42,6 +43,7 @@ static const uint16_t death_frames[] = {
 
 void Game1_PlayerSprite_Init(void) {
   animation_counter = 0;
+  facing_left = 0;
 }
 
 static uint16_t select_frame(const uint16_t *frames, uint8_t frame_count) {
@@ -49,8 +51,15 @@ static uint16_t select_frame(const uint16_t *frames, uint8_t frame_count) {
   return frames[index];
 }
 
-void Game1_PlayerSprite_Render(const Game1_Player *player, const Game1_Camera *camera) {
+void Game1_PlayerSprite_Render(const Game1_Player *player,
+                               const Game1_Camera *camera) {
   uint16_t gid;
+
+  if (player->vx < 0) {
+    facing_left = 1;
+  } else if (player->vx > 0) {
+    facing_left = 0;
+  }
 
   if (!player->alive) {
     gid = select_frame(death_frames, 3);
@@ -64,8 +73,8 @@ void Game1_PlayerSprite_Render(const Game1_Player *player, const Game1_Camera *c
 
   const Game1_TileSprite *sprite = Game1_Tiles_Find(gid);
 
-  Game1_Entity_DrawSprite(player->x - camera->x, player->y - camera->y,
-                          sprite);
+  Game1_Entity_DrawSprite_Flipped(player->x - camera->x, player->y - camera->y,
+                                  sprite, facing_left);
 
   animation_counter++;
 }
