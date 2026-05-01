@@ -1,6 +1,7 @@
 #include "game1_player.h"
 
 #include "game1_world/game1_world.h"
+#include "game1_entities/game1_entities.h"
 
 #define GAME1_MAX_FALL_SPEED 6
 #define GAME1_COYOTE_FRAMES 6
@@ -24,7 +25,8 @@ static void Game1_Player_ClampToWorld(Game1_Player *player) {
   }
 }
 
-static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player, int16_t test_x, int16_t test_y) {
+static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player,
+                                           int16_t test_x, int16_t test_y) {
   uint16_t left_tile = test_x / GAME1_TILE_SIZE;
   uint16_t right_tile = (test_x + player->width - 1) / GAME1_TILE_SIZE;
   uint16_t top_tile = test_y / GAME1_TILE_SIZE;
@@ -41,7 +43,8 @@ static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player, int16_t t
   return 0;
 }
 
-static void Game1_Player_HandleJump(Game1_Player *player, uint8_t jump_pressed) {
+static void Game1_Player_HandleJump(Game1_Player *player,
+                                    uint8_t jump_pressed) {
   if (!jump_pressed) {
     return;
   }
@@ -104,6 +107,23 @@ static void Game1_Player_MoveVertical(Game1_Player *player) {
   player->vy = 0;
 }
 
+static uint8_t Game1_Player_TouchingWater(const Game1_Player *player) {
+  uint16_t left_tile = player->x / GAME1_TILE_SIZE;
+  uint16_t right_tile = (player->x + player->width - 1) / GAME1_TILE_SIZE;
+  uint16_t top_tile = player->y / GAME1_TILE_SIZE;
+  uint16_t bottom_tile = (player->y + player->height - 1) / GAME1_TILE_SIZE;
+
+  for (uint16_t ty = top_tile; ty <= bottom_tile; ty++) {
+    for (uint16_t tx = left_tile; tx <= right_tile; tx++) {
+      if (Game1_World_IsWater(tx, ty)) {
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
 void Game1_Player_Init(Game1_Player *player) {
   player->x = 40;
   player->y = 40;
@@ -123,9 +143,23 @@ void Game1_Player_Init(Game1_Player *player) {
 
   player->has_key = 0;
   player->alive = 1;
+  player->death_timer = 0;
 }
 
 void Game1_Player_Update(Game1_Player *player, int16_t dx, uint8_t jump_pressed) {
+  if (!player->alive) {
+    player->vx = 0;
+    player->vy = 0;
+    player->death_timer++;
+
+    if (player->death_timer > 30) {
+      Game1_Player_Init(player);
+      Game1_Entities_SpawnPlayer(player);
+    }
+
+    return;
+  }
+
   player->vx = dx * player->move_speed;
 
   Game1_Player_HandleJump(player, jump_pressed);
@@ -135,4 +169,9 @@ void Game1_Player_Update(Game1_Player *player, int16_t dx, uint8_t jump_pressed)
   Game1_Player_MoveVertical(player);
 
   Game1_Player_ClampToWorld(player);
+
+  if (Game1_Player_TouchingWater(player)) {
+    player->alive = 0;
+    player->death_timer = 0;
+  }
 }

@@ -22,6 +22,7 @@ typedef struct {
 
   uint8_t has_key;
   uint8_t alive;
+  uint16_t death_timer;
 } Game1_Player;
 
 void Game1_Player_Init(Game1_Player *player);
