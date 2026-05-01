@@ -13,4 +13,6 @@ static inline uint8_t Game1_Entity_OverlapsPlayer(const Game1_Player *player, in
 
 void Game1_Entity_DrawSprite(int16_t screen_x, int16_t screen_y, const Game1_TileSprite *sprite);
 
+void Game1_Entity_DrawSprite_Flipped(int16_t screen_x, int16_t screen_y, const Game1_TileSprite *sprite, uint8_t flip_x);
+
 #endif

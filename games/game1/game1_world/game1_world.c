@@ -153,3 +153,12 @@ void Game1_World_SetCurrentRoom(uint8_t room_index) {
 }
 
 uint8_t Game1_World_GetCurrentRoom(void) { return current_room; }
+
+uint8_t Game1_World_IsWater(uint16_t tile_x, uint16_t tile_y) {
+  uint16_t tile = Game1_World_GetVisualTile(tile_x, tile_y);
+
+  return tile == 1723 ||
+         tile == 1745 ||
+         tile == 1767 ||
+         tile == 1789;
+}

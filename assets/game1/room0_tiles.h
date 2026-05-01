@@ -3,8 +3,8 @@
 
 #include <stdint.h>
 
-#define ROOM0_TILES_COUNT 29
-#define ROOM0_TILES_ANIMATION_COUNT 5
+#define ROOM0_TILES_COUNT 35
+#define ROOM0_TILES_ANIMATION_COUNT 6
 
 typedef struct {
   const uint8_t *pixels;

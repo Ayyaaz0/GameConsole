@@ -401,6 +401,84 @@ static const uint8_t tile_28[] = {
 
 static const Game1_TileSprite sprite_28 = { tile_28, 8, 8 };
 
+static const uint8_t tile_29[] = {
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 5, 5, 5, 5, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+  255, 5, 5, 255, 5, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+  5, 255, 5, 5, 255, 5, 255, 255,
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 5, 255, 255, 5, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_29 = { tile_29, 8, 8 };
+
+static const uint8_t tile_30[] = {
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 5, 5, 5, 5, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+  255, 5, 5, 255, 5, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 5, 5, 5, 5, 255, 255, 255,
+  255, 255, 5, 5, 255, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_30 = { tile_30, 8, 8 };
+
+static const uint8_t tile_31[] = {
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 5, 5, 5, 5, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+  255, 5, 5, 255, 5, 255, 255, 255,
+  5, 255, 255, 255, 255, 5, 255, 255,
+  255, 255, 5, 5, 255, 255, 255, 255,
+  5, 255, 5, 5, 255, 5, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_31 = { tile_31, 8, 8 };
+
+static const uint8_t tile_32[] = {
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 5, 5, 5, 5, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+  255, 5, 5, 255, 5, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+  5, 255, 5, 5, 255, 5, 255, 255,
+  255, 5, 255, 255, 5, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_32 = { tile_32, 8, 8 };
+
+static const uint8_t tile_33[] = {
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+  255, 5, 5, 255, 5, 255, 255, 255,
+  5, 255, 255, 255, 255, 5, 255, 255,
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 255, 5, 5, 255, 255, 255, 255,
+  255, 5, 255, 255, 5, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_33 = { tile_33, 8, 8 };
+
+static const uint8_t tile_34[] = {
+  255, 255, 255, 5, 255, 255, 255, 255,
+  255, 5, 255, 5, 255, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+  255, 255, 255, 255, 255, 255, 255, 255,
+  255, 255, 255, 5, 255, 5, 255, 255,
+  255, 255, 255, 5, 255, 255, 255, 255,
+  255, 5, 255, 255, 255, 255, 255, 255,
+};
+
+static const Game1_TileSprite sprite_34 = { tile_34, 8, 8 };
+
 typedef struct {
   uint16_t id;
   const Game1_TileSprite *sprite;
@@ -436,6 +514,12 @@ static const TileEntry lookup[ROOM0_TILES_COUNT] = {
   { 30439, &sprite_26 },
   { 30449, &sprite_27 },
   { 30459, &sprite_28 },
+  { 30717, &sprite_29 },
+  { 30718, &sprite_30 },
+  { 30731, &sprite_31 },
+  { 30788, &sprite_32 },
+  { 30801, &sprite_33 },
+  { 30815, &sprite_34 },
 };
 
 const Game1_TileSprite *Game1_Tiles_Find(uint16_t tiled_id) {
@@ -453,6 +537,7 @@ static const uint16_t animation_1_frames[] = { 3603, 3604 };
 static const uint16_t animation_2_frames[] = { 30065, 30066, 30067 };
 static const uint16_t animation_3_frames[] = { 30257, 30258, 30259, 30260 };
 static const uint16_t animation_4_frames[] = { 30429, 30439, 30449, 30459 };
+static const uint16_t animation_5_frames[] = { 30717, 30788 };
 
 typedef struct {
   uint16_t id;
@@ -466,9 +551,11 @@ static const AnimationEntry animations[ROOM0_TILES_ANIMATION_COUNT] = {
   { 30065, 3, animation_2_frames },
   { 30257, 4, animation_3_frames },
   { 30429, 4, animation_4_frames },
+  { 30717, 2, animation_5_frames },
 };
 
-uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id, uint32_t frame_counter) {
+uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id,
+                                      uint32_t frame_counter) {
   for (uint16_t i = 0; i < ROOM0_TILES_ANIMATION_COUNT; i++) {
     if (animations[i].id == tiled_id) {
       uint8_t frame_index = frame_counter % animations[i].frame_count;
