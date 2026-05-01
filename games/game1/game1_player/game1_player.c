@@ -8,6 +8,9 @@
 #define GAME1_MAX_AIR_JUMPS 1
 
 static void Game1_Player_ClampToWorld(Game1_Player *player) {
+  uint16_t world_width = Game1_World_GetCurrentRoomWidthPx();
+  uint16_t world_height = Game1_World_GetCurrentRoomHeightPx();
+
   if (player->x < 0) {
     player->x = 0;
   }
@@ -16,12 +19,12 @@ static void Game1_Player_ClampToWorld(Game1_Player *player) {
     player->y = 0;
   }
 
-  if (player->x + player->width > GAME1_WORLD_WIDTH_PX) {
-    player->x = GAME1_WORLD_WIDTH_PX - player->width;
+  if (player->x + player->width > world_width) {
+    player->x = world_width - player->width;
   }
 
-  if (player->y + player->height > GAME1_WORLD_HEIGHT_PX) {
-    player->y = GAME1_WORLD_HEIGHT_PX - player->height;
+  if (player->y + player->height > world_height) {
+    player->y = world_height - player->height;
   }
 }
 

@@ -41,9 +41,7 @@ static void game1_update(void) {
   Game1_Player_Update(&player, input.dx, input.jump_pressed);
   Game1_Entities_Update(&player, input.interact_pressed);
 
-  Game1_Camera_Update(&camera, player.x + (player.width / 2),
-                      player.y + (player.height / 2), GAME1_WORLD_WIDTH_PX,
-                      GAME1_WORLD_HEIGHT_PX);
+  Game1_Camera_Update(&camera, &player);
 }
 
 static void game1_render(void) {
