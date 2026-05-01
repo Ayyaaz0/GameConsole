@@ -109,15 +109,20 @@ void Game1_Player_Init(Game1_Player *player) {
   player->y = 40;
   player->vx = 0;
   player->vy = 0;
+
   player->width = 8;
   player->height = 8;
+
   player->move_speed = 2;
   player->jump_strength = 8;
   player->gravity = 1;
+
   player->grounded = 0;
   player->air_jumps_remaining = GAME1_MAX_AIR_JUMPS;
   player->coyote_timer = 0;
+
   player->has_key = 0;
+  player->alive = 1;
 }
 
 void Game1_Player_Update(Game1_Player *player, int16_t dx, uint8_t jump_pressed) {
