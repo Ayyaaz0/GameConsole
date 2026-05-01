@@ -1,6 +1,7 @@
 #include "game1_door.h"
 
 #include "game1_animation.h"
+#include "game1_entities.h"
 #include "game1_entity_common.h"
 #include "game1_world/game1_world.h"
 #include "room0_tiles.h"
@@ -40,8 +41,15 @@ typedef struct {
 static Game1_Door doors[GAME1_MAX_DOORS];
 static uint8_t door_count = 0;
 
+/*
+ * Used to stop the door update loop immediately after changing rooms.
+ * This avoids continuing to iterate over a door array that has just been reset.
+ */
+static uint8_t room_changed_this_frame = 0;
+
 void Game1_Door_Reset(void) {
   door_count = 0;
+  room_changed_this_frame = 0;
 }
 
 void Game1_Door_Load(const Game1_Entity *entity) {
@@ -75,8 +83,16 @@ void Game1_Door_Load(const Game1_Entity *entity) {
 
 static void enter_door(Game1_Player *player) {
   Game1_World_SetCurrentRoom(GAME1_ROOM0_DOOR_TARGET_ROOM);
-  Game1_World_SpawnAtTile(player, GAME1_ROOM1_SPAWN_TILE_X,
-                          GAME1_ROOM1_SPAWN_TILE_Y);
+
+  /*
+   * Reload keys, doors, coins, and spawn data for the new room.
+   * This keeps one entity system instead of duplicating logic per room.
+   */
+  Game1_Entities_Init();
+
+  Game1_World_SpawnAtTile(player, GAME1_ROOM1_SPAWN_TILE_X, GAME1_ROOM1_SPAWN_TILE_Y);
+
+  room_changed_this_frame = 1;
 }
 
 static void start_opening(Game1_Door *door) {
@@ -119,6 +135,8 @@ static void interact_door(Game1_Door *door, Game1_Player *player) {
 }
 
 void Game1_Door_UpdateAll(Game1_Player *player, uint8_t interact_pressed) {
+  room_changed_this_frame = 0;
+
   for (uint8_t i = 0; i < door_count; i++) {
     Game1_Door *door = &doors[i];
 
@@ -128,9 +146,12 @@ void Game1_Door_UpdateAll(Game1_Player *player, uint8_t interact_pressed) {
       continue;
     }
 
-    if (Game1_Entity_OverlapsPlayer(player, door->x, door->y, door->w,
-                                    door->h)) {
+    if (Game1_Entity_OverlapsPlayer(player, door->x, door->y, door->w, door->h)) {
       interact_door(door, player);
+
+      if (room_changed_this_frame) {
+        return;
+      }
     }
   }
 }
