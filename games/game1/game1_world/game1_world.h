@@ -32,7 +32,9 @@ void Game1_World_SpawnAtTile(Game1_Player *player, uint16_t tile_x, uint16_t til
 void Game1_World_SpawnAtStart(Game1_Player *player);
 
 uint16_t Game1_World_GetVisualTile(uint16_t tile_x, uint16_t tile_y);
+
 uint8_t Game1_World_IsWater(uint16_t tile_x, uint16_t tile_y);
+uint8_t Game1_World_IsSpike(uint16_t tile_x, uint16_t tile_y);
 
 uint16_t Game1_World_GetCurrentRoomWidthTiles(void);
 uint16_t Game1_World_GetCurrentRoomHeightTiles(void);

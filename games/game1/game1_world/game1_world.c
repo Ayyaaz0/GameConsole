@@ -158,3 +158,9 @@ uint8_t Game1_World_IsWater(uint16_t tile_x, uint16_t tile_y) {
 
   return tile == 1723 || tile == 1745 || tile == 1767 || tile == 1789;
 }
+
+uint8_t Game1_World_IsSpike(uint16_t tile_x, uint16_t tile_y) {
+  uint16_t tile = Game1_World_GetVisualTile(tile_x, tile_y);
+
+  return tile == 962 || tile == 965 || tile == 968 || tile == 970;
+}
