@@ -1,5 +1,10 @@
 #include "game1_camera.h"
 
+#include "game1_world/game1_world.h"
+
+#define GAME1_SCREEN_WIDTH 240
+#define GAME1_SCREEN_HEIGHT 240
+
 static int16_t Game1_Camera_Clamp(int16_t value, int16_t min, int16_t max) {
   if (value < min) {
     return min;
@@ -19,23 +24,16 @@ void Game1_Camera_Init(Game1_Camera *camera, uint16_t width, uint16_t height) {
   camera->height = height;
 }
 
-void Game1_Camera_Update(Game1_Camera *camera, int16_t target_x,
-                         int16_t target_y, uint16_t world_width_px,
-                         uint16_t world_height_px) {
-  int16_t desired_x = target_x - (camera->width / 2);
-  int16_t desired_y = target_y - (camera->height / 2);
+void Game1_Camera_Update(Game1_Camera *camera, const Game1_Player *player) {
+  int16_t max_camera_x =
+      Game1_World_GetCurrentRoomWidthPx() - GAME1_SCREEN_WIDTH;
 
-  int16_t max_x = world_width_px - camera->width;
-  int16_t max_y = world_height_px - camera->height;
-
-  if (max_x < 0) {
-    max_x = 0;
+  if (max_camera_x < 0) {
+    max_camera_x = 0;
   }
 
-  if (max_y < 0) {
-    max_y = 0;
-  }
+  camera->x = player->x - (GAME1_SCREEN_WIDTH / 2);
+  camera->x = Game1_Camera_Clamp(camera->x, 0, max_camera_x);
 
-  camera->x = Game1_Camera_Clamp(desired_x, 0, max_x);
-  camera->y = Game1_Camera_Clamp(desired_y, 0, max_y);
+  camera->y = 0;
 }

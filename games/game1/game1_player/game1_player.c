@@ -1,13 +1,16 @@
 #include "game1_player.h"
 
-#include "game1_world/game1_world.h"
 #include "game1_entities/game1_entities.h"
+#include "game1_world/game1_world.h"
 
 #define GAME1_MAX_FALL_SPEED 6
 #define GAME1_COYOTE_FRAMES 6
 #define GAME1_MAX_AIR_JUMPS 1
 
 static void Game1_Player_ClampToWorld(Game1_Player *player) {
+  uint16_t world_width = Game1_World_GetCurrentRoomWidthPx();
+  uint16_t world_height = Game1_World_GetCurrentRoomHeightPx();
+
   if (player->x < 0) {
     player->x = 0;
   }
@@ -16,17 +19,16 @@ static void Game1_Player_ClampToWorld(Game1_Player *player) {
     player->y = 0;
   }
 
-  if (player->x + player->width > GAME1_WORLD_WIDTH_PX) {
-    player->x = GAME1_WORLD_WIDTH_PX - player->width;
+  if (player->x + player->width > world_width) {
+    player->x = world_width - player->width;
   }
 
-  if (player->y + player->height > GAME1_WORLD_HEIGHT_PX) {
-    player->y = GAME1_WORLD_HEIGHT_PX - player->height;
+  if (player->y + player->height > world_height) {
+    player->y = world_height - player->height;
   }
 }
 
-static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player,
-                                           int16_t test_x, int16_t test_y) {
+static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player, int16_t test_x, int16_t test_y) {
   uint16_t left_tile = test_x / GAME1_TILE_SIZE;
   uint16_t right_tile = (test_x + player->width - 1) / GAME1_TILE_SIZE;
   uint16_t top_tile = test_y / GAME1_TILE_SIZE;
@@ -43,8 +45,25 @@ static uint8_t Game1_Player_WouldCollideAt(const Game1_Player *player,
   return 0;
 }
 
-static void Game1_Player_HandleJump(Game1_Player *player,
-                                    uint8_t jump_pressed) {
+static uint8_t Game1_Player_TouchingHazard(const Game1_Player *player) {
+  uint16_t left_tile = player->x / GAME1_TILE_SIZE;
+  uint16_t right_tile = (player->x + player->width - 1) / GAME1_TILE_SIZE;
+  uint16_t top_tile = player->y / GAME1_TILE_SIZE;
+  uint16_t bottom_tile = (player->y + player->height - 1) / GAME1_TILE_SIZE;
+
+  for (uint16_t tile_y = top_tile; tile_y <= bottom_tile; tile_y++) {
+    for (uint16_t tile_x = left_tile; tile_x <= right_tile; tile_x++) {
+      if (Game1_World_IsWater(tile_x, tile_y) ||
+          Game1_World_IsSpike(tile_x, tile_y)) {
+        return 1;
+      }
+    }
+  }
+
+  return 0;
+}
+
+static void Game1_Player_HandleJump(Game1_Player *player, uint8_t jump_pressed) {
   if (!jump_pressed) {
     return;
   }
@@ -107,23 +126,6 @@ static void Game1_Player_MoveVertical(Game1_Player *player) {
   player->vy = 0;
 }
 
-static uint8_t Game1_Player_TouchingWater(const Game1_Player *player) {
-  uint16_t left_tile = player->x / GAME1_TILE_SIZE;
-  uint16_t right_tile = (player->x + player->width - 1) / GAME1_TILE_SIZE;
-  uint16_t top_tile = player->y / GAME1_TILE_SIZE;
-  uint16_t bottom_tile = (player->y + player->height - 1) / GAME1_TILE_SIZE;
-
-  for (uint16_t ty = top_tile; ty <= bottom_tile; ty++) {
-    for (uint16_t tx = left_tile; tx <= right_tile; tx++) {
-      if (Game1_World_IsWater(tx, ty)) {
-        return 1;
-      }
-    }
-  }
-
-  return 0;
-}
-
 void Game1_Player_Init(Game1_Player *player) {
   player->x = 40;
   player->y = 40;
@@ -167,10 +169,9 @@ void Game1_Player_Update(Game1_Player *player, int16_t dx, uint8_t jump_pressed)
   Game1_Player_MoveHorizontal(player);
   Game1_Player_UpdateAirState(player);
   Game1_Player_MoveVertical(player);
-
   Game1_Player_ClampToWorld(player);
 
-  if (Game1_Player_TouchingWater(player)) {
+  if (Game1_Player_TouchingHazard(player)) {
     player->alive = 0;
     player->death_timer = 0;
   }

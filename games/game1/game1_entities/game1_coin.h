@@ -13,7 +13,7 @@ void Game1_Coin_Reset(void);
 void Game1_Coin_Load(const Game1_Entity *entity);
 void Game1_Coin_UpdateAll(Game1_Player *player);
 void Game1_Coin_RenderAll(const Game1_Camera *camera);
-
+void Game1_Coin_ResetScore(void);
 uint16_t Game1_Coin_GetScore(void);
 
 #endif
