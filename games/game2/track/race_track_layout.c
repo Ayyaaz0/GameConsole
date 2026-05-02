@@ -2,49 +2,180 @@
 
 #include <stddef.h>
 
-// Singapore-inspired simple street circuit layout.
-// Each segment represents one visible chunk of track in world space.
-static const RaceTrackSegment g_track_segments[] = {
-    {0, 260, 120, 140, RACE_SECTOR_1, "START STRAIGHT", true, true},
-    {260, 520, 112, 128, RACE_SECTOR_1, "MARINA ENTRY", true, false},
-    {520, 780, 98, 120, RACE_SECTOR_1, "BAY LEFT", true, true},
-    {780, 1040, 130, 118, RACE_SECTOR_1, "RAFFLES SWEEP", false, true},
+static const RaceTrackScreen g_track_screens[] = {
+    {
+        .tile_type = RACE_TRACK_STRAIGHT_VERTICAL,
+        .sector = RACE_SECTOR_1,
+        .corner_name = "START STRAIGHT",
+        .entry_edge = RACE_EDGE_BOTTOM,
+        .exit_edge = RACE_EDGE_TOP,
+        .spawn_x = 114.0f,
+        .spawn_y = 205.0f,
+        .spawn_heading_deg = 0.0f,
+        .road_rects = {
+            {80, 28, 80, 212},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        .road_rect_count = 1,
+        .curb_side = RACE_CURB_NONE,
+        .curb_rect = {0, 0, 0, 0},
+        .has_start_finish = true
+    },
 
-    {1040, 1300, 145, 116, RACE_SECTOR_2, "HOTEL RIGHT", true, true},
-    {1300, 1560, 118, 126, RACE_SECTOR_2, "BRIDGE RUN", false, true},
-    {1560, 1820, 92, 112, RACE_SECTOR_2, "TUNNEL LEFT", true, false},
-    {1820, 2080, 120, 132, RACE_SECTOR_2, "BAYFRONT DASH", true, true},
+    {
+        .tile_type = RACE_TRACK_TURN_UP_RIGHT,
+        .sector = RACE_SECTOR_1,
+        .corner_name = "T1 RIGHT 90",
+        .entry_edge = RACE_EDGE_BOTTOM,
+        .exit_edge = RACE_EDGE_RIGHT,
+        .spawn_x = 114.0f,
+        .spawn_y = 205.0f,
+        .spawn_heading_deg = 0.0f,
+        .road_rects = {
+            {70, 88, 100, 152},
+            {70, 68, 170, 100},
+            {70, 68, 100, 100}
+        },
+        .road_rect_count = 3,
+        .curb_side = RACE_CURB_RIGHT,
+        .curb_rect = {165, 74, 56, 10},
+        .has_start_finish = false
+    },
 
-    {2080, 2340, 150, 116, RACE_SECTOR_3, "STADIUM RIGHT", false, true},
-    {2340, 2600, 130, 118, RACE_SECTOR_3, "HARBOUR CUT", true, true},
-    {2600, 2860, 105, 124, RACE_SECTOR_3, "FINAL LEFT", true, false},
-    {2860, 3200, 120, 140, RACE_SECTOR_3, "FINISH RUN", true, true},
+    {
+        .tile_type = RACE_TRACK_STRAIGHT_HORIZONTAL,
+        .sector = RACE_SECTOR_1,
+        .corner_name = "EAST STRAIGHT",
+        .entry_edge = RACE_EDGE_LEFT,
+        .exit_edge = RACE_EDGE_RIGHT,
+        .spawn_x = 6.0f,
+        .spawn_y = 105.0f,
+        .spawn_heading_deg = 90.0f,
+        .road_rects = {
+            {0, 80, 240, 80},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        .road_rect_count = 1,
+        .curb_side = RACE_CURB_NONE,
+        .curb_rect = {0, 0, 0, 0},
+        .has_start_finish = false
+    },
+
+    {
+        .tile_type = RACE_TRACK_TURN_LEFT_UP,
+        .sector = RACE_SECTOR_1,
+        .corner_name = "T2 LEFT 90",
+        .entry_edge = RACE_EDGE_LEFT,
+        .exit_edge = RACE_EDGE_TOP,
+        .spawn_x = 6.0f,
+        .spawn_y = 105.0f,
+        .spawn_heading_deg = 90.0f,
+        .road_rects = {
+            {0, 82, 132, 82},
+            {92, 28, 84, 136},
+            {92, 82, 84, 82}
+        },
+        .road_rect_count = 3,
+        .curb_side = RACE_CURB_LEFT,
+        .curb_rect = {92, 64, 12, 58},
+        .has_start_finish = false
+    },
+
+    {
+        .tile_type = RACE_TRACK_STRAIGHT_VERTICAL,
+        .sector = RACE_SECTOR_2,
+        .corner_name = "NORTH RUN",
+        .entry_edge = RACE_EDGE_BOTTOM,
+        .exit_edge = RACE_EDGE_TOP,
+        .spawn_x = 114.0f,
+        .spawn_y = 205.0f,
+        .spawn_heading_deg = 0.0f,
+        .road_rects = {
+            {80, 28, 80, 212},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        .road_rect_count = 1,
+        .curb_side = RACE_CURB_NONE,
+        .curb_rect = {0, 0, 0, 0},
+        .has_start_finish = false
+    },
+
+    {
+        .tile_type = RACE_TRACK_TURN_UP_LEFT,
+        .sector = RACE_SECTOR_2,
+        .corner_name = "HOTEL LEFT",
+        .entry_edge = RACE_EDGE_BOTTOM,
+        .exit_edge = RACE_EDGE_LEFT,
+        .spawn_x = 114.0f,
+        .spawn_y = 205.0f,
+        .spawn_heading_deg = 0.0f,
+        .road_rects = {
+            {78, 110, 84, 130},
+            {0, 72, 122, 84},
+            {78, 72, 84, 84}
+        },
+        .road_rect_count = 3,
+        .curb_side = RACE_CURB_LEFT,
+        .curb_rect = {24, 78, 60, 12},
+        .has_start_finish = false
+    },
+
+    {
+        .tile_type = RACE_TRACK_STRAIGHT_HORIZONTAL,
+        .sector = RACE_SECTOR_2,
+        .corner_name = "WEST STRAIGHT",
+        .entry_edge = RACE_EDGE_RIGHT,
+        .exit_edge = RACE_EDGE_LEFT,
+        .spawn_x = 222.0f,
+        .spawn_y = 105.0f,
+        .spawn_heading_deg = 270.0f,
+        .road_rects = {
+            {0, 80, 240, 80},
+            {0, 0, 0, 0},
+            {0, 0, 0, 0}
+        },
+        .road_rect_count = 1,
+        .curb_side = RACE_CURB_NONE,
+        .curb_rect = {0, 0, 0, 0},
+        .has_start_finish = false
+    },
+
+    {
+        .tile_type = RACE_TRACK_TURN_RIGHT_UP,
+        .sector = RACE_SECTOR_2,
+        .corner_name = "T4 RIGHT 90",
+        .entry_edge = RACE_EDGE_RIGHT,
+        .exit_edge = RACE_EDGE_TOP,
+        .spawn_x = 222.0f,
+        .spawn_y = 105.0f,
+        .spawn_heading_deg = 270.0f,
+        .road_rects = {
+            {108, 82, 132, 82},
+            {76, 28, 84, 136},
+            {76, 82, 84, 82}
+        },
+        .road_rect_count = 3,
+        .curb_side = RACE_CURB_RIGHT,
+        .curb_rect = {148, 64, 12, 58},
+        .has_start_finish = false
+    }
 };
 
-const RaceTrackSegment *RaceTrackLayout_GetSegmentAtY(int32_t world_y) {
-  int i = 0;
-  int count = RaceTrackLayout_GetSegmentCount();
+int RaceTrackLayout_GetScreenCount(void)
+{
+    return (int)(sizeof(g_track_screens) / sizeof(g_track_screens[0]));
+}
 
-  for (i = 0; i < count; i++) {
-    if ((world_y >= g_track_segments[i].start_y) &&
-        (world_y < g_track_segments[i].end_y)) {
-      return &g_track_segments[i];
+const RaceTrackScreen *RaceTrackLayout_GetScreenByIndex(int index)
+{
+    int count = RaceTrackLayout_GetScreenCount();
+
+    if ((index < 0) || (index >= count)) {
+        return NULL;
     }
-  }
 
-  return &g_track_segments[count - 1];
-}
-
-int RaceTrackLayout_GetSegmentCount(void) {
-  return (int)(sizeof(g_track_segments) / sizeof(g_track_segments[0]));
-}
-
-const RaceTrackSegment *RaceTrackLayout_GetSegmentByIndex(int index) {
-  int count = RaceTrackLayout_GetSegmentCount();
-
-  if ((index < 0) || (index >= count)) {
-    return NULL;
-  }
-
-  return &g_track_segments[index];
+    return &g_track_screens[index];
 }
