@@ -1,9 +1,19 @@
 #include "race_track.h"
+
 #include "../config/race_config.h"
-#include "../utils/race_math.h"
-#include "race_track_layout.h"
-#include <limits.h>
+
 #include <stddef.h>
+
+static bool RaceTrack_RectContainsPoint(const RaceRect *rect, float x,
+                                        float y) {
+  if (rect == NULL) {
+    return false;
+  }
+
+  return (
+      (x >= (float)rect->x) && (x <= (float)(rect->x + (int16_t)rect->width)) &&
+      (y >= (float)rect->y) && (y <= (float)(rect->y + (int16_t)rect->height)));
+}
 
 void RaceTrack_Init(RaceTrack *track, uint16_t screen_width,
                     uint16_t screen_height) {
@@ -13,188 +23,299 @@ void RaceTrack_Init(RaceTrack *track, uint16_t screen_width,
 
   track->screen_width = screen_width;
   track->screen_height = screen_height;
-
-  // Keep the road centred on screen for now
-  track->road_center_x = (int16_t)(screen_width / 2U);
-  track->road_width = RACE_TRACK_WIDTH;
-
-  // The visible track starts at the beginning of the world
-  track->world_top_y = RACE_TRACK_WORLD_START_Y;
-
-  // The start/finish line is a fixed marker in world space
-  track->start_finish_world_y = RACE_TRACK_START_FINISH_Y;
-
-  track->lane_dash_length = RACE_TRACK_DASH_LENGTH;
-  track->lane_dash_gap = RACE_TRACK_DASH_GAP;
-
+  track->current_screen_index = RACE_TRACK_START_SCREEN_INDEX;
   track->active = true;
 }
 
-void RaceTrack_Advance(RaceTrack *track, int32_t delta_y) {
-  int32_t next_world_top = 0;
+void RaceTrack_ResetToStart(RaceTrack *track) {
+  if (track == NULL) {
+    return;
+  }
+
+  track->current_screen_index = RACE_TRACK_START_SCREEN_INDEX;
+  track->active = true;
+}
+
+void RaceTrack_GoToNextScreen(RaceTrack *track) {
+  int screen_count = 0;
 
   if ((track == NULL) || (track->active == false)) {
     return;
   }
 
-  next_world_top = track->world_top_y + delta_y;
+  screen_count = RaceTrackLayout_GetScreenCount();
 
-  // Do not allow the visible road window to go above the start of the world
-  track->world_top_y = RaceMath_ClampInt32(next_world_top, 0, INT32_MAX);
-}
-
-void RaceTrack_SetWorldTopY(RaceTrack *track, int32_t world_top_y) {
-  if ((track == NULL) || (track->active == false)) {
+  if (screen_count <= 0) {
     return;
   }
 
-  track->world_top_y = RaceMath_ClampInt32(world_top_y, 0, INT32_MAX);
-}
+  track->current_screen_index++;
 
-int32_t RaceTrack_GetWorldTopY(const RaceTrack *track) {
-  if (track == NULL) {
-    return 0;
+  if (track->current_screen_index >= screen_count) {
+    track->current_screen_index = 0;
   }
-
-  return track->world_top_y;
 }
 
-int32_t RaceTrack_GetWorldBottomY(const RaceTrack *track) {
-  if (track == NULL) {
-    return 0;
-  }
-
-  return (track->world_top_y + (int32_t)track->screen_height - 1);
-}
-
-int16_t RaceTrack_GetCenterX(const RaceTrack *track) {
-  const RaceTrackSegment *segment = NULL;
-
-  if (track == NULL) {
-    return 0;
-  }
-
-  segment = RaceTrackLayout_GetSegmentAtY(track->world_top_y + 120);
-
-  return segment->road_center_x;
-}
-
-int16_t RaceTrack_GetLeftEdgeX(const RaceTrack *track) {
-  const RaceTrackSegment *segment = NULL;
-
-  if (track == NULL) {
-    return 0;
-  }
-
-  segment = RaceTrackLayout_GetSegmentAtY(track->world_top_y + 120);
-
-  return (int16_t)(segment->road_center_x -
-                   (int16_t)(segment->road_width / 2U));
-}
-
-int16_t RaceTrack_GetRightEdgeX(const RaceTrack *track) {
-  const RaceTrackSegment *segment = NULL;
-
-  if (track == NULL) {
-    return 0;
-  }
-
-  segment = RaceTrackLayout_GetSegmentAtY(track->world_top_y + 120);
-
-  return (int16_t)(segment->road_center_x +
-                   (int16_t)(segment->road_width / 2U));
-}
-
-void RaceTrack_GetDriveBounds(const RaceTrack *track, int16_t *min_x,
-                              int16_t *max_x) {
-  int16_t left_edge = 0;
-  int16_t right_edge = 0;
-
-  if ((track == NULL) || (min_x == NULL) || (max_x == NULL)) {
-    return;
-  }
-
-  left_edge = RaceTrack_GetLeftEdgeX(track);
-  right_edge = RaceTrack_GetRightEdgeX(track);
-
-  *min_x = (int16_t)(left_edge + (int16_t)RACE_TRACK_EDGE_PADDING);
-  *max_x = (int16_t)(right_edge - (int16_t)RACE_TRACK_EDGE_PADDING);
-}
-
-bool RaceTrack_IsWorldYVisible(const RaceTrack *track, int32_t world_y) {
-  int32_t world_top = 0;
-  int32_t world_bottom = 0;
-
-  if (track == NULL) {
-    return false;
-  }
-
-  world_top = RaceTrack_GetWorldTopY(track);
-  world_bottom = RaceTrack_GetWorldBottomY(track);
-
-  return ((world_y >= world_top) && (world_y <= world_bottom));
-}
-
-int16_t RaceTrack_WorldToScreenY(const RaceTrack *track, int32_t world_y) {
-  if (track == NULL) {
-    return 0;
-  }
-
-  return (int16_t)(world_y - track->world_top_y);
-}
-
-int32_t RaceTrack_GetStartFinishWorldY(const RaceTrack *track) {
-  if (track == NULL) {
-    return 0;
-  }
-
-  return track->start_finish_world_y;
-}
-
-const RaceTrackSegment *RaceTrack_GetCurrentSegment(const RaceTrack *track) {
+const RaceTrackScreen *RaceTrack_GetCurrentScreen(const RaceTrack *track) {
   if (track == NULL) {
     return NULL;
   }
 
-  return RaceTrackLayout_GetSegmentAtY(track->world_top_y + 120);
+  return RaceTrackLayout_GetScreenByIndex(track->current_screen_index);
 }
 
-const char *RaceTrack_GetCurrentCornerName(const RaceTrack *track) {
-  const RaceTrackSegment *segment = RaceTrack_GetCurrentSegment(track);
-
-  if (segment == NULL) {
-    return "UNKNOWN";
+int RaceTrack_GetCurrentScreenIndex(const RaceTrack *track) {
+  if (track == NULL) {
+    return 0;
   }
 
-  return segment->corner_name;
+  return track->current_screen_index;
+}
+
+RaceTrackEdge RaceTrack_GetCurrentExitEdge(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (screen == NULL) {
+    return RACE_EDGE_TOP;
+  }
+
+  return screen->exit_edge;
+}
+
+float RaceTrack_GetSpawnX(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (screen == NULL) {
+    return RACE_PLAYER_START_X;
+  }
+
+  return screen->spawn_x;
+}
+
+float RaceTrack_GetSpawnY(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (screen == NULL) {
+    return RACE_PLAYER_START_Y;
+  }
+
+  return screen->spawn_y;
+}
+
+float RaceTrack_GetSpawnHeadingDeg(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (screen == NULL) {
+    return 0.0f;
+  }
+
+  return screen->spawn_heading_deg;
 }
 
 RaceSector RaceTrack_GetCurrentSector(const RaceTrack *track) {
-  const RaceTrackSegment *segment = RaceTrack_GetCurrentSegment(track);
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
 
-  if (segment == NULL) {
+  if (screen == NULL) {
     return RACE_SECTOR_1;
   }
 
-  return segment->sector;
+  return screen->sector;
 }
 
-bool RaceTrack_HasLeftCurbAtY(int32_t world_y) {
-  const RaceTrackSegment *segment = RaceTrackLayout_GetSegmentAtY(world_y);
+const char *RaceTrack_GetCurrentCornerName(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
 
-  if (segment == NULL) {
+  if (screen == NULL) {
+    return "UNKNOWN";
+  }
+
+  return screen->corner_name;
+}
+
+bool RaceTrack_CurrentScreenHasStartFinish(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (screen == NULL) {
     return false;
   }
 
-  return segment->left_curb;
+  return screen->has_start_finish;
 }
 
-bool RaceTrack_HasRightCurbAtY(int32_t world_y) {
-  const RaceTrackSegment *segment = RaceTrackLayout_GetSegmentAtY(world_y);
+bool RaceTrack_PointIsOnRoad(const RaceTrack *track, float x, float y) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+  uint8_t i = 0U;
 
-  if (segment == NULL) {
+  if (screen == NULL) {
     return false;
   }
 
-  return segment->right_curb;
+  for (i = 0U; i < screen->road_rect_count; i++) {
+    if (RaceTrack_RectContainsPoint(&screen->road_rects[i], x, y)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+bool RaceTrack_CarCentreIsOnRoad(const RaceTrack *track, float car_x,
+                                 float car_y, uint16_t car_width,
+                                 uint16_t car_height) {
+  float centre_x = car_x + ((float)car_width * 0.5f);
+  float centre_y = car_y + ((float)car_height * 0.5f);
+
+  return RaceTrack_PointIsOnRoad(track, centre_x, centre_y);
+}
+
+const RaceRect *RaceTrack_GetRoadRects(const RaceTrack *track,
+                                       uint8_t *rect_count) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (rect_count != NULL) {
+    *rect_count = 0U;
+  }
+
+  if (screen == NULL) {
+    return NULL;
+  }
+
+  if (rect_count != NULL) {
+    *rect_count = screen->road_rect_count;
+  }
+
+  return screen->road_rects;
+}
+
+RaceRect RaceTrack_GetCurbRect(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+  RaceRect empty_rect = {0, 0, 0, 0};
+
+  if (screen == NULL) {
+    return empty_rect;
+  }
+
+  return screen->curb_rect;
+}
+
+RaceCurbPlacement RaceTrack_GetCurbPlacement(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (screen == NULL) {
+    return RACE_CURB_NONE;
+  }
+
+  return screen->curb_side;
+}
+
+/* Compatibility helpers. These now return a sensible value from the first road
+ * rectangle. */
+
+int16_t RaceTrack_GetCenterX(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if ((screen == NULL) || (screen->road_rect_count == 0U)) {
+    return 120;
+  }
+
+  return (int16_t)(screen->road_rects[0].x +
+                   (int16_t)(screen->road_rects[0].width / 2U));
+}
+
+int16_t RaceTrack_GetLeftEdgeX(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if ((screen == NULL) || (screen->road_rect_count == 0U)) {
+    return 80;
+  }
+
+  return screen->road_rects[0].x;
+}
+
+int16_t RaceTrack_GetRightEdgeX(const RaceTrack *track) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if ((screen == NULL) || (screen->road_rect_count == 0U)) {
+    return 160;
+  }
+
+  return (int16_t)(screen->road_rects[0].x +
+                   (int16_t)screen->road_rects[0].width);
+}
+
+int16_t RaceTrack_GetCenterXAtScreenY(const RaceTrack *track,
+                                      uint16_t screen_y) {
+  (void)screen_y;
+  return RaceTrack_GetCenterX(track);
+}
+
+uint16_t RaceTrack_GetWidthAtScreenY(const RaceTrack *track,
+                                     uint16_t screen_y) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+  (void)screen_y;
+
+  if ((screen == NULL) || (screen->road_rect_count == 0U)) {
+    return 80U;
+  }
+
+  return screen->road_rects[0].width;
+}
+
+int16_t RaceTrack_GetLeftEdgeXAtScreenY(const RaceTrack *track,
+                                        uint16_t screen_y) {
+  (void)screen_y;
+  return RaceTrack_GetLeftEdgeX(track);
+}
+
+int16_t RaceTrack_GetRightEdgeXAtScreenY(const RaceTrack *track,
+                                         uint16_t screen_y) {
+  (void)screen_y;
+  return RaceTrack_GetRightEdgeX(track);
+}
+
+void RaceTrack_GetDriveBounds(const RaceTrack *track, int16_t *min_x,
+                              int16_t *max_x) {
+  if ((min_x == NULL) || (max_x == NULL)) {
+    return;
+  }
+
+  *min_x = RaceTrack_GetLeftEdgeX(track);
+  *max_x = RaceTrack_GetRightEdgeX(track);
+}
+
+bool RaceTrack_HasLeftCurbAtScreenY(const RaceTrack *track, uint16_t screen_y) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (screen == NULL) {
+    return false;
+  }
+
+  if ((screen_y < (uint16_t)screen->curb_rect.y) ||
+      (screen_y > (uint16_t)(screen->curb_rect.y + screen->curb_rect.height))) {
+    return false;
+  }
+
+  return ((screen->curb_side == RACE_CURB_LEFT) ||
+          (screen->curb_side == RACE_CURB_BOTH));
+}
+
+bool RaceTrack_HasRightCurbAtScreenY(const RaceTrack *track,
+                                     uint16_t screen_y) {
+  const RaceTrackScreen *screen = RaceTrack_GetCurrentScreen(track);
+
+  if (screen == NULL) {
+    return false;
+  }
+
+  if ((screen_y < (uint16_t)screen->curb_rect.y) ||
+      (screen_y > (uint16_t)(screen->curb_rect.y + screen->curb_rect.height))) {
+    return false;
+  }
+
+  return ((screen->curb_side == RACE_CURB_RIGHT) ||
+          (screen->curb_side == RACE_CURB_BOTH));
+}
+
+float RaceTrack_GetNextSpawnX(const RaceTrack *track) {
+  return RaceTrack_GetSpawnX(track);
 }
