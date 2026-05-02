@@ -6,7 +6,7 @@
 #define GAME3_PLAYER_MOVE_SPEED 2
 #define GAME3_PLAYER_GRAVITY    1
 #define GAME3_PLAYER_MAX_FALL_SPEED 6
-#define GAME3_PLAYER_JUMP_VELOCITY  -8
+#define GAME3_PLAYER_JUMP_VELOCITY  -10
 #define GAME3_PLAYER_JUMP_COOLDOWN_MS   200
 
 #define GAME3_PLAYER_DASH_SPEED 6
@@ -20,15 +20,19 @@
 #define GAME3_PLAYER_START_HEALTH   3
 #define GAME3_PLAYER_START_ARMOUR   3
 
-static uint8_t Game3_Player_Is_Solid_At_Pixel(int16_t px, int16_t py) { 
-    if (px < 0 || py < 0) { 
-        return 1; 
-    }   
+static uint8_t Game3_Player_Is_Solid_At_Pixel(int16_t px, int16_t py) {
+    if (px < 0 || py < 0) {
+        return 1;
+    }
 
-    uint16_t tile_x = (uint16_t)px / GAME3_TILE_SIZE; 
-    uint16_t tile_y = (uint16_t)py/ GAME3_TILE_SIZE; 
+    uint16_t tile_x = (uint16_t)px / GAME3_TILE_SIZE;
+    uint16_t tile_y = (uint16_t)py/ GAME3_TILE_SIZE;
 
-    return Game3_World_Is_Solid(tile_x, tile_y); 
+    if (Game3_World_Is_Solid(tile_x, tile_y)) {
+        return 1;
+    }
+
+    return Game3_World_Pixel_Hits_Moving_Platform(px, py);
 }
 
 static uint8_t Game3_Player_Is_On_Ground(const Game3_Player *player) { 
