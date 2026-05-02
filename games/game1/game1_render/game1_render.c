@@ -1,8 +1,8 @@
 #include "game1_render.h"
 #include "LCD.h"
-#include "game1_world/game1_world.h"
-#include "room0_tiles.h"
 #include "game1_player_sprite.h"
+#include "game1_tiles.h"
+#include "game1_world/game1_world.h"
 
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
@@ -10,15 +10,15 @@
 
 static uint32_t animation_frame_counter = 0;
 
-static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const Game1_TileSprite *sprite) {
+static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y,
+                                  const Game1_TileSprite *sprite) {
   if (sprite == 0 || sprite->pixels == 0) {
     return;
   }
 
-  LCD_Draw_Sprite(screen_x, screen_y, sprite->height, 
-                  sprite->width, sprite->pixels);
+  LCD_Draw_Sprite(screen_x, screen_y, sprite->height, sprite->width,
+                  sprite->pixels);
 }
-
 
 void Game1_Render_DrawWorld(const Game1_Camera *camera) {
   uint32_t animation_frame =
@@ -53,6 +53,7 @@ void Game1_Render_DrawWorld(const Game1_Camera *camera) {
   animation_frame_counter++;
 }
 
-void Game1_Render_DrawPlayer(const Game1_Player *player, const Game1_Camera *camera) {
+void Game1_Render_DrawPlayer(const Game1_Player *player,
+                             const Game1_Camera *camera) {
   Game1_PlayerSprite_Render(player, camera);
 }

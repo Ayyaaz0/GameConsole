@@ -1,7 +1,7 @@
 #include "game1_player_sprite.h"
 
 #include "game1_entity_common.h"
-#include "room0_tiles.h"
+#include "game1_tiles.h"
 
 #include <stdint.h>
 

@@ -3,8 +3,8 @@
 #include "game1_animation.h"
 #include "game1_entities.h"
 #include "game1_entity_common.h"
+#include "game1_tiles.h"
 #include "game1_world/game1_world.h"
-#include "room0_tiles.h"
 
 #define GAME1_ROOM0_DOOR_TARGET_ROOM 1
 #define GAME1_ROOM1_SPAWN_TILE_X 2
@@ -90,7 +90,8 @@ static void enter_door(Game1_Player *player) {
    */
   Game1_Entities_Init();
 
-  Game1_World_SpawnAtTile(player, GAME1_ROOM1_SPAWN_TILE_X, GAME1_ROOM1_SPAWN_TILE_Y);
+  Game1_World_SpawnAtTile(player, GAME1_ROOM1_SPAWN_TILE_X,
+                          GAME1_ROOM1_SPAWN_TILE_Y);
 
   room_changed_this_frame = 1;
 }
@@ -146,7 +147,8 @@ void Game1_Door_UpdateAll(Game1_Player *player, uint8_t interact_pressed) {
       continue;
     }
 
-    if (Game1_Entity_OverlapsPlayer(player, door->x, door->y, door->w, door->h)) {
+    if (Game1_Entity_OverlapsPlayer(player, door->x, door->y, door->w,
+                                    door->h)) {
       interact_door(door, player);
 
       if (room_changed_this_frame) {

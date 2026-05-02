@@ -1,14 +1,12 @@
 #include "game1_key.h"
 
 #include "game1_entity_common.h"
-#include "room0_tiles.h"
+#include "game1_tiles.h"
 
 static Game1_Key keys[GAME1_MAX_KEYS];
 static uint8_t key_count = 0;
 
-void Game1_Key_Reset(void) {
-  key_count = 0;
-}
+void Game1_Key_Reset(void) { key_count = 0; }
 
 void Game1_Key_Load(const Game1_Entity *entity) {
   if (key_count >= GAME1_MAX_KEYS) {
