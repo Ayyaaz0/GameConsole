@@ -154,6 +154,26 @@ static void game3_update(void) {
     Game3_Projectile_Fire(&projectile, &player);
   }
 
+  /* Capture whether the player is riding the moving platform BEFORE the
+   * world advances it, so we can translate the player by the platform's
+   * dx and keep them locked to it. */
+  uint8_t player_riding_platform = Game3_World_Box_Is_On_Moving_Platform(
+      player.x, player.y, player.width, player.height);
+
+  Game3_World_Update();
+
+  if (player_riding_platform) {
+    const Game3_MovingPlatform *plat = Game3_World_Get_Moving_Platform();
+    player.x += plat->dx;
+
+    if (player.x < 0) {
+      player.x = 0;
+    }
+    if (player.x > (GAME3_WORLD_WIDTH_PX - player.width)) {
+      player.x = GAME3_WORLD_WIDTH_PX - player.width;
+    }
+  }
+
   Game3_Player_Update(&player, input.dx, input.jump_pressed, input.dash_pressed, input.dash_dx, input.attack_pressed, input.up_held);
   Game3_Camera_Update(&camera, &player);
 
