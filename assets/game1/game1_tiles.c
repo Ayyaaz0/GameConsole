@@ -815,7 +815,7 @@ typedef struct {
   const Game1_TileSprite *sprite;
 } TileEntry;
 
-static const TileEntry lookup[ROOM0_TILES_COUNT] = {
+static const TileEntry lookup[GAME1_TILES_COUNT] = {
     {20, &sprite_0},     {116, &sprite_1},    {121, &sprite_2},
     {125, &sprite_3},    {127, &sprite_4},    {128, &sprite_5},
     {136, &sprite_6},    {143, &sprite_7},    {144, &sprite_8},
@@ -846,7 +846,7 @@ static const TileEntry lookup[ROOM0_TILES_COUNT] = {
 };
 
 const Game1_TileSprite *Game1_Tiles_Find(uint16_t tiled_id) {
-  for (uint16_t i = 0; i < ROOM0_TILES_COUNT; i++) {
+  for (uint16_t i = 0; i < GAME1_TILES_COUNT; i++) {
     if (lookup[i].id == tiled_id) {
       return lookup[i].sprite;
     }
@@ -871,7 +871,7 @@ typedef struct {
   const uint16_t *frames;
 } AnimationEntry;
 
-static const AnimationEntry animations[ROOM0_TILES_ANIMATION_COUNT] = {
+static const AnimationEntry animations[GAME1_TILES_ANIMATION_COUNT] = {
     {1789, 4, animation_0_frames},  {3603, 2, animation_1_frames},
     {30065, 3, animation_2_frames}, {30257, 4, animation_3_frames},
     {30429, 4, animation_4_frames}, {30717, 2, animation_5_frames},
@@ -881,7 +881,7 @@ static const AnimationEntry animations[ROOM0_TILES_ANIMATION_COUNT] = {
 
 uint16_t Game1_Tiles_ResolveAnimation(uint16_t tiled_id,
                                       uint32_t frame_counter) {
-  for (uint16_t i = 0; i < ROOM0_TILES_ANIMATION_COUNT; i++) {
+  for (uint16_t i = 0; i < GAME1_TILES_ANIMATION_COUNT; i++) {
     if (animations[i].id == tiled_id) {
       uint8_t frame_index = frame_counter % animations[i].frame_count;
       return animations[i].frames[frame_index];
