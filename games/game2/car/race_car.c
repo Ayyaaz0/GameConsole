@@ -1,95 +1,88 @@
 #include "race_car.h"
+
 #include "../config/race_config.h"
 #include "../utils/race_math.h"
+
 #include <stddef.h>
 
-static void RaceCar_ApplyThrottleAndBrake(RaceCar *car,
-                                          const RaceInput *input) {
-  if (input->throttle > 0.0f) {
-    car->speed += RACE_CAR_ACCELERATION * input->throttle;
+static float RaceCar_AbsFloat(float value) {
+  if (value < 0.0f) {
+    return -value;
   }
 
-  if (input->brake > 0.0f) {
-    // If moving forward, brake hard.
-    // If already stopped/slow, allow reverse.
-    if (car->speed > 0.0f) {
-      car->speed -= RACE_CAR_BRAKE_FORCE * input->brake;
-    } else {
-      car->speed -= (RACE_CAR_BRAKE_FORCE * 0.55f) * input->brake;
-    }
-  }
+  return value;
 }
 
-static void RaceCar_ApplyDrag(RaceCar *car) {
-  if (car->speed > 0.0f) {
+static void RaceCar_SavePreviousPosition(RaceCar *car) {
+  car->prev_x = car->x;
+  car->prev_y = car->y;
+  car->prev_heading_deg = car->heading_deg;
+}
+
+static float RaceCar_GetArcadeHeading(float move_x, float move_y,
+                                      float current_heading) {
+  if ((move_x == 0.0f) && (move_y == 0.0f)) {
+    return current_heading;
+  }
+
+  if ((move_x == 0.0f) && (move_y < 0.0f)) {
+    return 0.0f;
+  }
+
+  if ((move_x > 0.0f) && (move_y < 0.0f)) {
+    return 45.0f;
+  }
+
+  if ((move_x > 0.0f) && (move_y == 0.0f)) {
+    return 90.0f;
+  }
+
+  if ((move_x > 0.0f) && (move_y > 0.0f)) {
+    return 135.0f;
+  }
+
+  if ((move_x == 0.0f) && (move_y > 0.0f)) {
+    return 180.0f;
+  }
+
+  if ((move_x < 0.0f) && (move_y > 0.0f)) {
+    return 225.0f;
+  }
+
+  if ((move_x < 0.0f) && (move_y == 0.0f)) {
+    return 270.0f;
+  }
+
+  return 315.0f;
+}
+
+static void RaceCar_ApplyArcadeSpeed(RaceCar *car, const RaceInput *input) {
+  if ((input->move_x != 0.0f) || (input->move_y != 0.0f)) {
+    car->speed += RACE_CAR_ACCELERATION;
+  } else {
     car->speed -= RACE_CAR_DRAG;
-
-    if (car->speed < 0.0f) {
-      car->speed = 0.0f;
-    }
-  } else if (car->speed < 0.0f) {
-    car->speed += RACE_CAR_DRAG;
-
-    if (car->speed > 0.0f) {
-      car->speed = 0.0f;
-    }
   }
+
+  car->speed = RaceMath_ClampFloat(car->speed, 0.0f, RACE_CAR_MAX_SPEED);
 }
 
-static void RaceCar_ApplySteering(RaceCar *car, const RaceInput *input) {
-  float speed_abs = 0.0f;
-  float speed_ratio = 0.0f;
-  float steering_strength = 0.0f;
+static void RaceCar_ApplyArcadeMovement(RaceCar *car, const RaceInput *input) {
+  float move_x = input->move_x;
+  float move_y = input->move_y;
+  float diagonal_multiplier = 1.0f;
 
-  if ((car->speed < RACE_CAR_MIN_TURN_SPEED) &&
-      (car->speed > -RACE_CAR_MIN_TURN_SPEED)) {
+  if ((move_x == 0.0f) && (move_y == 0.0f)) {
     return;
   }
 
-  speed_abs = car->speed;
-
-  if (speed_abs < 0.0f) {
-    speed_abs = -speed_abs;
+  if ((move_x != 0.0f) && (move_y != 0.0f)) {
+    diagonal_multiplier = 0.7071f;
   }
 
-  // 0.0 = stopped, 1.0 = max speed
-  speed_ratio = speed_abs / RACE_CAR_MAX_SPEED;
+  car->heading_deg = RaceCar_GetArcadeHeading(move_x, move_y, car->heading_deg);
 
-  if (speed_ratio > 1.0f) {
-    speed_ratio = 1.0f;
-  }
-
-  // More speed now gives more steering response.
-  steering_strength = RACE_CAR_TURN_RATE *
-                      (1.0f + (speed_ratio * RACE_CAR_HIGH_SPEED_STEER_BOOST));
-
-  car->heading_deg += input->steering * steering_strength;
-}
-
-static void RaceCar_ApplyForwardMovement(RaceCar *car) {
-  float speed_abs = 0.0f;
-  float speed_ratio = 0.0f;
-  float lateral_move = 0.0f;
-
-  speed_abs = car->speed;
-
-  if (speed_abs < 0.0f) {
-    speed_abs = -speed_abs;
-  }
-
-  speed_ratio = speed_abs / RACE_CAR_MAX_SPEED;
-
-  if (speed_ratio > 1.0f) {
-    speed_ratio = 1.0f;
-  }
-
-  lateral_move = car->heading_deg * RACE_CAR_LATERAL_GRIP *
-                 (0.018f + (speed_ratio * 0.020f));
-
-  car->x += lateral_move;
-  car->y -= car->speed;
-
-  car->heading_deg *= (0.65f + (speed_ratio * 0.18f));
+  car->x += move_x * car->speed * diagonal_multiplier;
+  car->y += move_y * car->speed * diagonal_multiplier;
 }
 
 void RaceCar_Init(RaceCar *car) {
@@ -99,8 +92,11 @@ void RaceCar_Init(RaceCar *car) {
 
   car->x = RACE_PLAYER_START_X;
   car->y = RACE_PLAYER_START_Y;
+  car->prev_x = car->x;
+  car->prev_y = car->y;
   car->speed = 0.0f;
   car->heading_deg = 0.0f;
+  car->prev_heading_deg = 0.0f;
   car->width = RACE_PLAYER_WIDTH;
   car->height = RACE_PLAYER_HEIGHT;
   car->active = true;
@@ -111,14 +107,9 @@ void RaceCar_UpdatePhysics(RaceCar *car, const RaceInput *input) {
     return;
   }
 
-  RaceCar_ApplyThrottleAndBrake(car, input);
-  RaceCar_ApplyDrag(car);
-
-  car->speed =
-      RaceMath_ClampFloat(car->speed, RACE_CAR_MIN_SPEED, RACE_CAR_MAX_SPEED);
-
-  RaceCar_ApplySteering(car, input);
-  RaceCar_ApplyForwardMovement(car);
+  RaceCar_SavePreviousPosition(car);
+  RaceCar_ApplyArcadeSpeed(car, input);
+  RaceCar_ApplyArcadeMovement(car, input);
 }
 
 void RaceCar_Move(RaceCar *car, float dx, float dy) {
@@ -128,6 +119,16 @@ void RaceCar_Move(RaceCar *car, float dx, float dy) {
 
   car->x += dx;
   car->y += dy;
+}
+
+void RaceCar_RestorePreviousPosition(RaceCar *car) {
+  if ((car == NULL) || (car->active == false)) {
+    return;
+  }
+
+  car->x = car->prev_x;
+  car->y = car->prev_y;
+  car->heading_deg = car->prev_heading_deg;
 }
 
 void RaceCar_ClampToScreen(RaceCar *car, uint16_t screen_width,

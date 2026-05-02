@@ -5,6 +5,8 @@ typedef struct {
   float throttle;
   float brake;
   float steering;
+  float move_x;
+  float move_y;
 } RaceInput;
 
 void RaceInput_Read(RaceInput *input);
