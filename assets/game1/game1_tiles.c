@@ -845,10 +845,26 @@ static const TileEntry lookup[GAME1_TILES_COUNT] = {
     {30815, &sprite_78},
 };
 
+/*
+binary search through tiles.
+log2(79) ≈ 7 comparisons per lookup
+*/ 
 const Game1_TileSprite *Game1_Tiles_Find(uint16_t tiled_id) {
-  for (uint16_t i = 0; i < GAME1_TILES_COUNT; i++) {
-    if (lookup[i].id == tiled_id) {
-      return lookup[i].sprite;
+  int16_t left = 0;
+  int16_t right = GAME1_TILES_COUNT - 1;
+
+  while (left <= right) {
+    int16_t mid = left + ((right - left) / 2);
+    uint16_t current_id = lookup[mid].id;
+
+    if (current_id == tiled_id) {
+      return lookup[mid].sprite;
+    }
+
+    if (current_id < tiled_id) {
+      left = mid + 1;
+    } else {
+      right = mid - 1;
     }
   }
 
