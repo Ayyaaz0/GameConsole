@@ -46,6 +46,8 @@
 #define GAME3_FLYING_HOVER_ABOVE_PLAYER_PX  22
 #define GAME3_FLYING_FOLLOW_DEADZONE_PX 2
 
+#define GAME3_KNOCKBACK_DX_MAGNITUDE    2
+
 // SHARED HELPERS
 
 // Axis-Aligned Bounding Box overlap check (each box treated as a rectangle, returns 1 if they overlap)
@@ -86,6 +88,36 @@ static void Game3_Clamp_X_To_World(int16_t *x, uint8_t width) {
     if (*x > (GAME3_WORLD_WIDTH_PX - width)) {
         *x = GAME3_WORLD_WIDTH_PX - width;
     }
+}
+
+// True if a hit cooldown is active. last_hit_ms == 0 means never been hit.
+static uint8_t Game3_Hit_Cooldown_Active(uint32_t last_hit_ms, uint32_t now, uint32_t cooldown_ms) {
+    if (last_hit_ms == 0) {
+        return 0;
+    }
+    return (now - last_hit_ms) < cooldown_ms;
+}
+
+// Knockback pointing away from the direction of player face
+static int8_t Game3_Knockback_Dx_From_Facing(int16_t facing_dx) {
+    if (facing_dx < 0) {
+        return -GAME3_KNOCKBACK_DX_MAGNITUDE;
+    }
+    return GAME3_KNOCKBACK_DX_MAGNITUDE;
+}
+
+// Knockback pushing self away from other (compares centre points)
+static int8_t Game3_Knockback_Dx_From_Centres(int16_t self_centre_x, int16_t other_centre_x) {
+    if (self_centre_x < other_centre_x) {
+        return -GAME3_KNOCKBACK_DX_MAGNITUDE;
+    }
+    return GAME3_KNOCKBACK_DX_MAGNITUDE;
+}
+
+// Step x by one knockback frame and clamp back into the world
+static void Game3_Apply_Knockback_Step(int16_t *x, int16_t dx, int16_t speed, uint8_t width) {
+    *x += dx * speed;
+    Game3_Clamp_X_To_World(x, width);
 }
 
 // REGULAR ENEMY
@@ -137,27 +169,18 @@ void Game3_Enemy_Update(Game3_Enemy *enemy, const Game3_Player *player) {
         if (now >= enemy->knockback_end_time_ms) {
             enemy->is_in_knockback = 0;
         } else {
-            enemy->x += enemy->knockback_dx * enemy->knockback_speed;
-            Game3_Clamp_X_To_World(&enemy->x, enemy->width);
+            Game3_Apply_Knockback_Step(&enemy->x, enemy->knockback_dx, enemy->knockback_speed, enemy->width);
             return;
         }
     }
 
     if (Game3_Enemy_Is_Touching_Player(enemy, player)) {
-        int16_t enemy_centre_x = Game3_Box_Centre_X(enemy->x, enemy->width);
-        int16_t player_centre_x = Game3_Player_Centre_X(player);
-
         enemy->is_in_knockback = 1;
         enemy->knockback_end_time_ms = now + GAME3_ENEMY_KNOCKBACK_DURATION_MS;
 
-        if (enemy_centre_x < player_centre_x) {
-            enemy->knockback_dx = -2; // Left
-        } else {
-            enemy->knockback_dx = 2; // Right
-        }
+        enemy->knockback_dx = Game3_Knockback_Dx_From_Centres(Game3_Box_Centre_X(enemy->x, enemy->width), Game3_Player_Centre_X(player));
 
-        enemy->x += enemy->knockback_dx * enemy->knockback_speed;
-        Game3_Clamp_X_To_World(&enemy->x, enemy->width);
+        Game3_Apply_Knockback_Step(&enemy->x, enemy->knockback_dx, enemy->knockback_speed, enemy->width);
         return;
     }
 
@@ -197,7 +220,7 @@ uint8_t Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Playe
         return 0;
     }
 
-    if (enemy->last_attack_hit_time_ms != 0 && (now - enemy->last_attack_hit_time_ms) < GAME3_ENEMY_ATTACK_HIT_COOLDOWN_MS) {
+    if (Game3_Hit_Cooldown_Active(enemy->last_attack_hit_time_ms, now, GAME3_ENEMY_ATTACK_HIT_COOLDOWN_MS)) {
         return 0;
     }
 
@@ -214,14 +237,9 @@ uint8_t Game3_Enemy_Start_Attack_Knockback(Game3_Enemy *enemy, const Game3_Playe
     enemy->is_in_knockback = 1;
     enemy->knockback_end_time_ms = now + GAME3_ENEMY_KNOCKBACK_DURATION_MS;
 
-    if (player->facing_dx < 0) {
-        enemy->knockback_dx = -2;
-    } else {
-        enemy->knockback_dx = 2;
-    }
+    enemy->knockback_dx = Game3_Knockback_Dx_From_Facing(player->facing_dx);
 
-    enemy->x += enemy->knockback_dx * enemy->knockback_speed;
-    Game3_Clamp_X_To_World(&enemy->x, enemy->width);
+    Game3_Apply_Knockback_Step(&enemy->x, enemy->knockback_dx, enemy->knockback_speed, enemy->width);
 
     return 1;
 }
@@ -298,8 +316,7 @@ void Game3_ChargerEnemy_Update(Game3_ChargerEnemy *enemy, const Game3_Player *pl
             enemy->is_in_knockback = 0;
             enemy->knockback_dx = 0;
         } else {
-            enemy->x += enemy->knockback_dx * enemy->knockback_speed;
-            Game3_Clamp_X_To_World(&enemy->x, enemy->width);
+            Game3_Apply_Knockback_Step(&enemy->x, enemy->knockback_dx, enemy->knockback_speed, enemy->width);
             return;
         }
     }
@@ -386,29 +403,21 @@ uint8_t Game3_ChargerEnemy_Start_Attack_Hit(Game3_ChargerEnemy *enemy, const Gam
         return 0;
     }
 
-    if (enemy->last_attack_hit_time_ms != 0 && (now -  enemy->last_attack_hit_time_ms) < GAME3_CHARGER_ATTACK_COOLDOWN_MS) {
+    if (Game3_Hit_Cooldown_Active(enemy->last_attack_hit_time_ms, now, GAME3_CHARGER_ATTACK_COOLDOWN_MS)) {
         return 0;
     }
 
     enemy->last_attack_hit_time_ms = now;
 
-    int16_t enemy_centre_x = Game3_Box_Centre_X(enemy->x, enemy->width);
-    int16_t player_centre_x = Game3_Player_Centre_X(player);
-
     enemy->is_in_knockback = 1;
     enemy->knockback_end_time_ms = now + GAME3_CHARGER_KNOCKBACK_DURATION_MS;
 
-    if (enemy_centre_x < player_centre_x) {
-        enemy->knockback_dx = -2;
-    } else {
-        enemy->knockback_dx = 2;
-    }
+    enemy->knockback_dx = Game3_Knockback_Dx_From_Centres(Game3_Box_Centre_X(enemy->x, enemy->width), Game3_Player_Centre_X(player));
 
     enemy->state = GAME3_CHARGER_STATE_COOLDOWN;
     enemy->state_end_time_ms = now + GAME3_CHARGER_COOLDOWN_MS;
 
-    enemy->x += enemy->knockback_dx * enemy->knockback_speed;
-    Game3_Clamp_X_To_World(&enemy->x, enemy->width);
+    Game3_Apply_Knockback_Step(&enemy->x, enemy->knockback_dx, enemy->knockback_speed, enemy->width);
 
     return 1;
 }
@@ -420,7 +429,7 @@ uint8_t Game3_ChargerEnemy_Start_Player_Attack_Knockback(Game3_ChargerEnemy *ene
         return 0;
     }
 
-    if (enemy->last_attack_hit_time_ms != 0 && (now - enemy->last_attack_hit_time_ms) < GAME3_CHARGER_ATTACK_COOLDOWN_MS) {
+    if (Game3_Hit_Cooldown_Active(enemy->last_attack_hit_time_ms, now, GAME3_CHARGER_ATTACK_COOLDOWN_MS)) {
         return 0;
     }
 
@@ -437,17 +446,12 @@ uint8_t Game3_ChargerEnemy_Start_Player_Attack_Knockback(Game3_ChargerEnemy *ene
     enemy->is_in_knockback = 1;
     enemy->knockback_end_time_ms = now + GAME3_CHARGER_KNOCKBACK_DURATION_MS;
 
-    if (player->facing_dx < 0) {
-        enemy->knockback_dx = -2;
-    } else {
-        enemy->knockback_dx = 2;
-    }
+    enemy->knockback_dx = Game3_Knockback_Dx_From_Facing(player->facing_dx);
 
     enemy->state = GAME3_CHARGER_STATE_COOLDOWN;
     enemy->state_end_time_ms = now + GAME3_CHARGER_COOLDOWN_MS;
 
-    enemy->x += enemy->knockback_dx * enemy->knockback_speed;
-    Game3_Clamp_X_To_World(&enemy->x, enemy->width);
+    Game3_Apply_Knockback_Step(&enemy->x, enemy->knockback_dx, enemy->knockback_speed, enemy->width);
 
     return 1;
 }
@@ -621,7 +625,7 @@ uint8_t Game3_FlyingEnemy_Start_Player_Attack(Game3_FlyingEnemy *enemy, const Ga
         return 0;
     }
 
-    if (enemy->last_attack_hit_time_ms != 0 && (now - enemy->last_attack_hit_time_ms) < GAME3_FLYING_ATTACK_COOLDOWN) {
+    if (Game3_Hit_Cooldown_Active(enemy->last_attack_hit_time_ms, now, GAME3_FLYING_ATTACK_COOLDOWN)) {
         return 0;
     }
 
