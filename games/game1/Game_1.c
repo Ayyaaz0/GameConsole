@@ -9,6 +9,7 @@
 #include "game1_player/game1_player.h"
 #include "game1_render/game1_render.h"
 #include "game1_world/game1_world.h"
+#include "game1_audio/game1_sfx.h"
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -69,6 +70,7 @@ static void game1_update(void) {
 
   Game1_Input input = {0};
   Game1_Input_Read(&input);
+  Game1_Sfx_Update();
 
   Game1_Player_Update(&player, input.dx, input.jump_pressed);
   Game1_Entities_Update(&player, input.interact_pressed);
@@ -96,6 +98,7 @@ static void game1_shutdown(void) {
   LCD_Fill_Buffer(0);
   LCD_Set_Palette(PALETTE_DEFAULT);
   LCD_Refresh(&cfg0);
+  Game1_Sfx_Stop();
 }
 
 bool Game1_ShouldExit(void) {

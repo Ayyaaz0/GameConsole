@@ -2,6 +2,7 @@
 
 #include "game1_entities/game1_entities.h"
 #include "game1_world/game1_world.h"
+#include "game1_audio/game1_sfx.h"
 
 #define GAME1_MAX_FALL_SPEED 6
 #define GAME1_COYOTE_FRAMES 6
@@ -174,5 +175,6 @@ void Game1_Player_Update(Game1_Player *player, int16_t dx, uint8_t jump_pressed)
   if (Game1_Player_TouchingHazard(player)) {
     player->alive = 0;
     player->death_timer = 0;
+    Game1_Sfx_PlayDeath();
   }
 }

@@ -2,6 +2,7 @@
 
 #include "game1_entity_common.h"
 #include "game1_tiles.h"
+#include "game1_audio/game1_sfx.h"
 
 #define GAME1_COIN_ANIMATION_SPEED 3
 
@@ -58,10 +59,10 @@ void Game1_Coin_UpdateAll(Game1_Player *player) {
       continue;
     }
 
-    if (Game1_Entity_OverlapsPlayer(player, coin->x, coin->y, coin->w,
-                                    coin->h)) {
+    if (Game1_Entity_OverlapsPlayer(player, coin->x, coin->y, coin->w, coin->h)) {
       coin->active = 0;
       score += coin->value;
+      Game1_Sfx_PlayCoin();
     }
   }
 
