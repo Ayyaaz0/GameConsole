@@ -14,9 +14,6 @@
 #include <stdint.h>
 #include <stdio.h>
 
-//test
-#include "stm32l4xx_hal.h"
-
 #define GAME1_WIN_ROOM 1
 #define GAME1_WIN_X 440
 
