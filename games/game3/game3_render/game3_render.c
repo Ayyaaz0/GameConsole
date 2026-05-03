@@ -60,21 +60,24 @@ static void Game3_Render_Draw_Rect_Camera(int16_t world_x, int16_t world_y, uint
     LCD_Draw_Rect((uint16_t)screen_x, (uint16_t)screen_y, width, height, colour, fill);
 }
 
-void Game3_Render_Draw_World(const Game3_Camera *camera) { 
+void Game3_Render_Draw_World(const Game3_Camera *camera) {
     for (uint16_t tile_y = 0; tile_y < GAME3_ROOM_HEIGHT; tile_y++) {
-         for (uint16_t tile_x = 0; tile_x < GAME3_ROOM_WIDTH; tile_x++) { 
-            uint8_t tile = Game3_World_Get_Tile(tile_x, tile_y); 
+         for (uint16_t tile_x = 0; tile_x < GAME3_ROOM_WIDTH; tile_x++) {
+            uint8_t tile = Game3_World_Get_Tile(tile_x, tile_y);
 
-            if (tile == GAME3_TILE_EMPTY) { 
-                continue; 
+            if (tile == GAME3_TILE_EMPTY) {
+                continue;
             }
 
-            uint16_t world_x = tile_x * GAME3_TILE_SIZE; 
-            uint16_t world_y = tile_y * GAME3_TILE_SIZE; 
+            uint16_t world_x = tile_x * GAME3_TILE_SIZE;
+            uint16_t world_y = tile_y * GAME3_TILE_SIZE;
 
-            Game3_Render_Draw_Rect_Camera(world_x, world_y, GAME3_TILE_SIZE, GAME3_TILE_SIZE, 2, 1, camera);  
+            Game3_Render_Draw_Rect_Camera(world_x, world_y, GAME3_TILE_SIZE, GAME3_TILE_SIZE, 2, 1, camera);
          }
     }
+
+    const Game3_MovingPlatform *plat = Game3_World_Get_Moving_Platform();
+    Game3_Render_Draw_Rect_Camera(plat->x, plat->y, plat->width, plat->height, 12, 1, camera);
 }
 
 void Game3_Render_Draw_Player (const Game3_Player *player, const Game3_Camera *camera) { 
