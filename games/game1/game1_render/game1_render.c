@@ -1,8 +1,9 @@
 #include "game1_render.h"
+
 #include "LCD.h"
-#include "game1_world/game1_world.h"
-#include "room0_tiles.h"
 #include "game1_player_sprite.h"
+#include "game1_tiles.h"
+#include "game1_world/game1_world.h"
 
 #define GAME1_SCREEN_WIDTH 240
 #define GAME1_SCREEN_HEIGHT 240
@@ -15,38 +16,87 @@ static void Game1_Render_DrawTile(int16_t screen_x, int16_t screen_y, const Game
     return;
   }
 
-  LCD_Draw_Sprite(screen_x, screen_y, sprite->height, 
-                  sprite->width, sprite->pixels);
+  LCD_Draw_Sprite(screen_x, screen_y, sprite->height, sprite->width, sprite->pixels);
 }
 
+static uint16_t Game1_Render_GetFirstVisibleTileX(const Game1_Camera *camera) {
+  return camera->x / GAME1_TILE_SIZE;
+}
+
+static uint16_t Game1_Render_GetLastVisibleTileX(const Game1_Camera *camera) {
+  uint16_t first_tile_x = Game1_Render_GetFirstVisibleTileX(camera);
+
+  uint16_t last_tile_x = first_tile_x + (GAME1_SCREEN_WIDTH / GAME1_TILE_SIZE) + 1;
+
+  uint16_t room_width = Game1_World_GetCurrentRoomWidthTiles();
+
+  if (last_tile_x > room_width) {
+    last_tile_x = room_width;
+  }
+
+  return last_tile_x;
+}
+
+static uint16_t
+Game1_Render_ResolveAnimationCached(uint16_t tile, uint32_t animation_frame,
+                                    uint16_t *cached_anim_input,
+                                    uint16_t *cached_anim_output) {
+  if (tile == *cached_anim_input) {
+    return *cached_anim_output;
+  }
+
+  *cached_anim_input = tile;
+  *cached_anim_output = Game1_Tiles_ResolveAnimation(tile, animation_frame);
+
+  return *cached_anim_output;
+}
+
+static const Game1_TileSprite *
+Game1_Render_FindSpriteCached(uint16_t gid, uint16_t *cached_gid,
+                              const Game1_TileSprite **cached_sprite) {
+  if (gid == *cached_gid) {
+    return *cached_sprite;
+  }
+
+  *cached_gid = gid;
+  *cached_sprite = Game1_Tiles_Find(gid);
+
+  return *cached_sprite;
+}
 
 void Game1_Render_DrawWorld(const Game1_Camera *camera) {
-  uint32_t animation_frame =
-      animation_frame_counter / GAME1_ANIMATION_SPEED_FRAMES;
+  uint32_t animation_frame = animation_frame_counter / GAME1_ANIMATION_SPEED_FRAMES;
+
+  uint16_t first_tile_x = Game1_Render_GetFirstVisibleTileX(camera);
+  uint16_t last_tile_x = Game1_Render_GetLastVisibleTileX(camera);
+
+  // Small per-frame cache. Avoids repeated searches for identical sprites.
+  uint16_t cached_gid = 0;
+  const Game1_TileSprite *cached_sprite = 0;
+
+  // Small per-frame cache. Avoids repeated animation resolution for identical
+  // tiles.
+  uint16_t cached_anim_input = 0;
+  uint16_t cached_anim_output = 0;
 
   for (uint16_t tile_y = 0; tile_y < GAME1_ROOM_HEIGHT; tile_y++) {
-    for (uint16_t tile_x = 0; tile_x < GAME1_ROOM_WIDTH; tile_x++) {
+    for (uint16_t tile_x = first_tile_x; tile_x < last_tile_x; tile_x++) {
       uint16_t tile = Game1_World_GetVisualTile(tile_x, tile_y);
-
-      int16_t screen_x = (tile_x * GAME1_TILE_SIZE) - camera->x;
-      int16_t screen_y = (tile_y * GAME1_TILE_SIZE) - camera->y;
-
-      if (screen_x + GAME1_TILE_SIZE <= 0 || screen_x >= GAME1_SCREEN_WIDTH ||
-          screen_y + GAME1_TILE_SIZE <= 0 || screen_y >= GAME1_SCREEN_HEIGHT) {
-        continue;
-      }
 
       if (tile == 0) {
         continue;
       }
 
-      uint16_t draw_tile = Game1_Tiles_ResolveAnimation(tile, animation_frame);
+      int16_t screen_x = (tile_x * GAME1_TILE_SIZE) - camera->x;
+      int16_t screen_y = (tile_y * GAME1_TILE_SIZE) - camera->y;
 
-      const Game1_TileSprite *sprite = Game1_Tiles_Find(draw_tile);
+      uint16_t draw_tile = Game1_Render_ResolveAnimationCached(
+          tile, animation_frame, &cached_anim_input, &cached_anim_output);
 
-      if (sprite != 0) {
-        Game1_Render_DrawTile(screen_x, screen_y, sprite);
-      }
+      const Game1_TileSprite *sprite =
+          Game1_Render_FindSpriteCached(draw_tile, &cached_gid, &cached_sprite);
+
+      Game1_Render_DrawTile(screen_x, screen_y, sprite);
     }
   }
 
