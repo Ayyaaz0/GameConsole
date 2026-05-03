@@ -1,3 +1,7 @@
+This project provides a shared embedded game framework for STM32, where multiple games are integrated into a common menu system and runtime loop.
+
+Each game operates independently while sharing input, rendering, and hardware resources.
+
 ## Controls
 
 - **Joystick UP/DOWN**: Navigate menu
