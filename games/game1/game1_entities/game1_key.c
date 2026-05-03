@@ -2,6 +2,7 @@
 
 #include "game1_entity_common.h"
 #include "game1_tiles.h"
+#include "game1_audio/game1_sfx.h"
 
 static Game1_Key keys[GAME1_MAX_KEYS];
 static uint8_t key_count = 0;
@@ -35,6 +36,7 @@ void Game1_Key_UpdateAll(Game1_Player *player) {
     if (Game1_Entity_OverlapsPlayer(player, key->x, key->y, key->w, key->h)) {
       player->has_key = 1;
       key->active = 0;
+      Game1_Sfx_PlayKey();
     }
   }
 }
