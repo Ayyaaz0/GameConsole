@@ -28,11 +28,6 @@ static Game1_Camera camera;
 static bool game1_shutdown_requested = false;
 static uint8_t game1_won = 0;
 
-//test fps
-static uint32_t fps_last_tick = 0;
-static uint16_t fps_frame_count = 0;
-static uint16_t fps_current = 0;
-
 static void Game1_CheckWinCondition(const Game1_Player *player) {
   if (Game1_World_GetCurrentRoom() == GAME1_WIN_ROOM &&
       player->x > GAME1_WIN_X) {
@@ -98,19 +93,6 @@ static void game1_render(void) {
   Game1_Render_DrawPlayer(&player, &camera);
 
   LCD_Refresh(&cfg0);
-
-  //fps test code
-  fps_frame_count++;  
-
-  uint32_t now = HAL_GetTick();
-
-  if (now - fps_last_tick >= 1000) {
-    fps_current = fps_frame_count;
-    fps_frame_count = 0;
-    fps_last_tick = now;
-
-    printf("FPS: %u\n", fps_current);
-  }
 }
 
 static void game1_shutdown(void) {
