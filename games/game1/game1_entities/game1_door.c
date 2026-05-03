@@ -181,9 +181,21 @@ void Game1_Door_RenderAll(const Game1_Camera *camera) {
   for (uint8_t i = 0; i < door_count; i++) {
     const Game1_Door *door = &doors[i];
 
+    int16_t screen_x = door->x - camera->x;
+    int16_t screen_y = door->y - camera->y;
+
+    if (!Game1_Entity_IsVisibleOnScreen(screen_x, screen_y, door->w, door->h)) {
+      continue;
+    }
+
     uint16_t door_gid = get_door_gid(door);
+
     const Game1_TileSprite *sprite = Game1_Tiles_Find(door_gid);
 
-    Game1_Entity_DrawSprite(door->x - camera->x, door->y - camera->y, sprite);
+    if (sprite == 0) {
+      continue;
+    }
+
+    Game1_Entity_DrawSprite(screen_x, screen_y, sprite);
   }
 }

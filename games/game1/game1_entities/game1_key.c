@@ -47,8 +47,14 @@ void Game1_Key_RenderAll(const Game1_Camera *camera) {
       continue;
     }
 
-    const Game1_TileSprite *sprite = Game1_Tiles_Find(key->sprite_gid);
+    int16_t screen_x = key->x - camera->x;
+    int16_t screen_y = key->y - camera->y;
 
-    Game1_Entity_DrawSprite(key->x - camera->x, key->y - camera->y, sprite);
+    if (!Game1_Entity_IsVisibleOnScreen(screen_x, screen_y, key->w, key->h)) {
+      continue;
+    }
+    
+    const Game1_TileSprite *sprite = Game1_Tiles_Find(key->sprite_gid);
+    Game1_Entity_DrawSprite(screen_x, screen_y, sprite);
   }
 }

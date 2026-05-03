@@ -2,6 +2,9 @@
 
 #include "LCD.h"
 
+#define GAME1_SCREEN_WIDTH 240
+#define GAME1_SCREEN_HEIGHT 240
+
 void Game1_Entity_DrawSprite(int16_t screen_x, int16_t screen_y, const Game1_TileSprite *sprite) {
   if (sprite == 0 || sprite->pixels == 0) {
     return;
@@ -32,4 +35,8 @@ void Game1_Entity_DrawSprite_Flipped(int16_t screen_x, int16_t screen_y, const G
       LCD_Set_Pixel(screen_x + x, screen_y + y, colour);
     }
   }
+}
+
+uint8_t Game1_Entity_IsVisibleOnScreen(int16_t screen_x, int16_t screen_y, uint8_t w, uint8_t h) {
+  return !(screen_x + w <= 0 || screen_x >= GAME1_SCREEN_WIDTH || screen_y + h <= 0 || screen_y >= GAME1_SCREEN_HEIGHT);
 }
