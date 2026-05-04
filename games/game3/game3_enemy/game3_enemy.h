@@ -8,6 +8,8 @@
 #define GAME3_MAX_CHARGER_ENEMIES 3
 #define GAME3_MAX_FLYING_ENEMIES  2
 
+#define GAME3_FLYING_PROJECTILE_COUNT 2
+
 typedef struct { 
     int16_t x; 
     int16_t y; 
@@ -88,7 +90,7 @@ typedef struct {
     uint32_t hit_flash_end_time_ms; 
     uint32_t last_attack_hit_time_ms; 
 
-    Game3_FlyingProjectile projectiles[2];
+    Game3_FlyingProjectile projectiles[GAME3_FLYING_PROJECTILE_COUNT];
 } Game3_FlyingEnemy; 
 
 // BASIC ENEMY

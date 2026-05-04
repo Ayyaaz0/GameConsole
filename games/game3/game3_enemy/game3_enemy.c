@@ -120,6 +120,15 @@ static void Game3_Apply_Knockback_Step(int16_t *x, int16_t dx, int16_t speed, ui
     Game3_Clamp_X_To_World(x, width);
 }
 
+// Move value toward target by speed, ignoring jitter inside deadzone
+static void Game3_Approach_With_Deadzone(int16_t *value, int16_t target, int16_t speed, int16_t deadzone) {
+    if (*value < target - deadzone) {
+        *value += speed;
+    } else if (*value > target + deadzone) {
+        *value -= speed;
+    }
+}
+
 // REGULAR ENEMY
 
 uint8_t Game3_Enemy_Is_Touching_Player(const Game3_Enemy *enemy, const Game3_Player *player) {
@@ -481,15 +490,20 @@ uint8_t Game3_ChargerEnemy_Is_Hit_Flashing(const Game3_ChargerEnemy *enemy) {
 
 // FLYING ENEMY
 
+// Set up a single projectile in one place
+static void Game3_FlyingProjectile_Init(Game3_FlyingProjectile *p, int16_t x, int16_t y, int16_t vx, int16_t vy, uint8_t is_active) {
+    p->x = x;
+    p->y = y;
+    p->vx = vx;
+    p->vy = vy;
+    p->width = GAME3_FLYING_PROJECTILE_SIZE;
+    p->height = GAME3_FLYING_PROJECTILE_SIZE;
+    p->is_active = is_active;
+}
+
 void Game3_FlyingEnemy_Clear_Projectiles(Game3_FlyingEnemy *enemy) {
-    for (uint8_t i = 0; i < 2; i++) {
-        enemy->projectiles[i].is_active = 0;
-        enemy->projectiles[i].x = 0;
-        enemy->projectiles[i].y = 0;
-        enemy->projectiles[i].vx = 0;
-        enemy->projectiles[i].vy = 0;
-        enemy->projectiles[i].width = GAME3_FLYING_PROJECTILE_SIZE;
-        enemy->projectiles[i].height = GAME3_FLYING_PROJECTILE_SIZE;
+    for (uint8_t i = 0; i < GAME3_FLYING_PROJECTILE_COUNT; i++) {
+        Game3_FlyingProjectile_Init(&enemy->projectiles[i], 0, 0, 0, 0, 0);
     }
 }
 
@@ -518,29 +532,17 @@ void Game3_FlyingEnemy_Init(Game3_FlyingEnemy *enemy) {
     Game3_FlyingEnemy_Spawn(enemy, 15 * GAME3_TILE_SIZE, 6 * GAME3_TILE_SIZE);
 }
 
+// Spawn a left-and-right projectile pair from below enemy
 static void Game3_FlyingEnemy_Fire_Projectiles(Game3_FlyingEnemy *enemy) {
     int16_t start_x = enemy->x + (enemy->width / 2) - (GAME3_FLYING_PROJECTILE_SIZE / 2);
     int16_t start_y = enemy->y + enemy->height;
 
-    enemy->projectiles[0].x = start_x;
-    enemy->projectiles[0].y = start_y;
-    enemy->projectiles[0].vx = -GAME3_FLYING_PROJECTILE_SPEED_X;
-    enemy->projectiles[0].vy = GAME3_FLYING_PROJECTILE_SPEED_Y;
-    enemy->projectiles[0].width = GAME3_FLYING_PROJECTILE_SIZE;
-    enemy->projectiles[0].height = GAME3_FLYING_PROJECTILE_SIZE;
-    enemy->projectiles[0].is_active = 1;
-
-    enemy->projectiles[1].x = start_x;
-    enemy->projectiles[1].y = start_y;
-    enemy->projectiles[1].vx = GAME3_FLYING_PROJECTILE_SPEED_X;
-    enemy->projectiles[1].vy = GAME3_FLYING_PROJECTILE_SPEED_Y;
-    enemy->projectiles[1].width = GAME3_FLYING_PROJECTILE_SIZE;
-    enemy->projectiles[1].height = GAME3_FLYING_PROJECTILE_SIZE;
-    enemy->projectiles[1].is_active = 1;
+    Game3_FlyingProjectile_Init(&enemy->projectiles[0], start_x, start_y, -GAME3_FLYING_PROJECTILE_SPEED_X, GAME3_FLYING_PROJECTILE_SPEED_Y, 1);
+    Game3_FlyingProjectile_Init(&enemy->projectiles[1], start_x, start_y,  GAME3_FLYING_PROJECTILE_SPEED_X, GAME3_FLYING_PROJECTILE_SPEED_Y, 1);
 }
 
 static void Game3_FlyingEnemy_Update_Projectile(Game3_FlyingEnemy *enemy) {
-    for (uint8_t i = 0; i < 2; i++) {
+    for (uint8_t i = 0; i < GAME3_FLYING_PROJECTILE_COUNT; i++) {
         Game3_FlyingProjectile *projectile = &enemy->projectiles[i];
 
         if (!projectile->is_active) {
@@ -556,16 +558,9 @@ static void Game3_FlyingEnemy_Update_Projectile(Game3_FlyingEnemy *enemy) {
     }
 }
 
-void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *player) {
-    if (!enemy->is_alive) {
-        return;
-    }
-
-    uint32_t now = HAL_GetTick();
-
-    int16_t player_centre_x = Game3_Player_Centre_X(player);
-
-    int16_t target_x = player_centre_x - (enemy->width / 2);
+// Flyer hovers just above the player, clamped on screen
+static void Game3_FlyingEnemy_Compute_Hover_Target(const Game3_FlyingEnemy *enemy, const Game3_Player *player, int16_t *out_x, int16_t *out_y) {
+    int16_t target_x = Game3_Player_Centre_X(player) - (enemy->width / 2);
     int16_t target_y = player->y - GAME3_FLYING_HOVER_ABOVE_PLAYER_PX - enemy->height;
 
     if (target_y < GAME3_TILE_SIZE) {
@@ -580,23 +575,35 @@ void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *play
         target_x = GAME3_WORLD_WIDTH_PX - enemy->width;
     }
 
-    if (enemy->x < target_x - GAME3_FLYING_FOLLOW_DEADZONE_PX) {
-        enemy->x += enemy->move_speed;
-    } else if (enemy->x > target_x + GAME3_FLYING_FOLLOW_DEADZONE_PX) {
-        enemy->x -= enemy->move_speed;
+    *out_x = target_x;
+    *out_y = target_y;
+}
+
+// Fire if the shot timer is up, then reset 
+static void Game3_FlyingEnemy_Maybe_Fire(Game3_FlyingEnemy *enemy, uint32_t now) {
+    if (now < enemy->next_shot_time_ms) {
+        return;
+    }
+    Game3_FlyingEnemy_Fire_Projectiles(enemy);
+    enemy->next_shot_time_ms = now + GAME3_FLYING_SHOOT_INTERVAL_MS;
+}
+
+void Game3_FlyingEnemy_Update(Game3_FlyingEnemy *enemy, const Game3_Player *player) {
+    if (!enemy->is_alive) {
+        return;
     }
 
-    if (enemy->y < target_y - GAME3_FLYING_FOLLOW_DEADZONE_PX) {
-        enemy->y += enemy->move_speed;
-    } else if (enemy->y > target_y + GAME3_FLYING_FOLLOW_DEADZONE_PX) {
-        enemy->y -= enemy->move_speed;
-    }
+    uint32_t now = HAL_GetTick();
 
-    if (now >= enemy->next_shot_time_ms) {
-         Game3_FlyingEnemy_Fire_Projectiles(enemy);
-         enemy->next_shot_time_ms = now + GAME3_FLYING_SHOOT_INTERVAL_MS;
-    }
+    int16_t target_x;
+    int16_t target_y;
 
+    Game3_FlyingEnemy_Compute_Hover_Target(enemy, player, &target_x, &target_y);
+
+    Game3_Approach_With_Deadzone(&enemy->x, target_x, enemy->move_speed, GAME3_FLYING_FOLLOW_DEADZONE_PX);
+    Game3_Approach_With_Deadzone(&enemy->y, target_y, enemy->move_speed, GAME3_FLYING_FOLLOW_DEADZONE_PX);
+
+    Game3_FlyingEnemy_Maybe_Fire(enemy, now);
     Game3_FlyingEnemy_Update_Projectile(enemy);
 }
 
@@ -662,7 +669,7 @@ uint8_t Game3_FlyingEnemy_Is_Hit_Flashing(const Game3_FlyingEnemy *enemy) {
 }
 
 uint8_t Game3_FlyingEnemy_Projectile_Is_Touching_Player(const Game3_FlyingEnemy *enemy, const Game3_Player *player) {
-    for (uint8_t i = 0; i < 2; i++) {
+    for (uint8_t i = 0; i < GAME3_FLYING_PROJECTILE_COUNT; i++) {
         const Game3_FlyingProjectile *projectile = &enemy->projectiles[i];
 
         if (!projectile->is_active) {
