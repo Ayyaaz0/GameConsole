@@ -12,10 +12,8 @@ typedef struct {
   bool hit_any_edge;
 } RaceCollisionState;
 
-// Reset collision flags
 void RaceCollision_Reset(RaceCollisionState *collision);
 
-// Check and resolve player collision with the road edges
 void RaceCollision_HandleRoadEdges(RaceCollisionState *collision,
                                    RaceCar *player_car, const RaceTrack *track);
 
