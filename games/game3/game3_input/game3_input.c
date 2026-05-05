@@ -9,16 +9,20 @@
 extern Joystick_cfg_t joystick_cfg;
 extern Joystick_t joystick_data;
 
+// Window for the second tap on the same direction to count as a dash
 #define GAME3_DASH_TAP_WINDOW_MS 500
 
-void Game3_Input_Read(Game3_Input *input) { 
-    static uint8_t last_jump_held = 0; 
+// Reads the joystick + buttons and produces edge-triggered events for the player
+void Game3_Input_Read(Game3_Input *input) {
+    // Static remembers across frames so we can detect rising edges (just-pressed)
+    static uint8_t last_jump_held = 0;
 
     static uint8_t last_right_held = 0;
-    static uint8_t last_left_held = 0; 
-    
-    static uint32_t last_right_tap_time_ms = 0; 
-    static uint32_t last_left_tap_time_ms = 0; 
+    static uint8_t last_left_held = 0;
+
+    // Time of the previous left/right tap, used for the double-tap dash
+    static uint32_t last_right_tap_time_ms = 0;
+    static uint32_t last_left_tap_time_ms = 0;
 
     uint8_t jump_held = 0; 
     uint8_t right_held = 0;
@@ -42,7 +46,8 @@ void Game3_Input_Read(Game3_Input *input) {
     input->attack_pressed = current_input.btn2_pressed;
     input->ability_pressed = current_input.btn3_pressed;
 
-    switch (joystick_data.direction) { 
+    // Map joystick direction to dx and remember which side is held
+    switch (joystick_data.direction) {
         case W: 
         case NW: 
         case SW: 
@@ -67,11 +72,13 @@ void Game3_Input_Read(Game3_Input *input) {
         input->up_held = 1;
     }
 
-    input->jump_pressed = (jump_held && !last_jump_held) ? 1 : 0; 
-    right_pressed_this_frame = (right_held && !last_right_held) ? 1 : 0; 
-    left_pressed_this_frame = (left_held && !last_left_held) ? 1 : 0; 
+    // Edge detect: held now AND not held last frame = just pressed this frame
+    input->jump_pressed = (jump_held && !last_jump_held) ? 1 : 0;
+    right_pressed_this_frame = (right_held && !last_right_held) ? 1 : 0;
+    left_pressed_this_frame = (left_held && !last_left_held) ? 1 : 0;
 
-    if (right_pressed_this_frame) { 
+    // DASH = two taps on the same side within the window
+    if (right_pressed_this_frame) {
         if ((now - last_right_tap_time_ms) <= GAME3_DASH_TAP_WINDOW_MS) { 
             input->dash_pressed = 1; 
             input->dash_dx = 1; 
@@ -91,7 +98,8 @@ void Game3_Input_Read(Game3_Input *input) {
         }
     }
 
-    last_jump_held = jump_held; 
-    last_right_held = right_held; 
-    last_left_held = left_held; 
+    // Save this frame's held state for next frame's edge detection
+    last_jump_held = jump_held;
+    last_right_held = right_held;
+    last_left_held = left_held;
 }

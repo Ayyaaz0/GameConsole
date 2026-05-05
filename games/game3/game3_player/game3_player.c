@@ -3,13 +3,15 @@
 #include "stm32l4xx_hal.h"
 #include <stdint.h>
 
-#define GAME3_PLAYER_MOVE_SPEED 2
-#define GAME3_PLAYER_GRAVITY    1
-#define GAME3_PLAYER_MAX_FALL_SPEED 6
-#define GAME3_PLAYER_JUMP_VELOCITY  -10
+// MOVEMENT TUNING
+
+#define GAME3_PLAYER_MOVE_SPEED         2
+#define GAME3_PLAYER_GRAVITY            1
+#define GAME3_PLAYER_MAX_FALL_SPEED     6
+#define GAME3_PLAYER_JUMP_VELOCITY      -10        // negative because y grows downward
 #define GAME3_PLAYER_JUMP_COOLDOWN_MS   200
 
-#define GAME3_PLAYER_DASH_SPEED 6
+#define GAME3_PLAYER_DASH_SPEED         6
 #define GAME3_PLAYER_DASH_DURATION_MS   120
 #define GAME3_PLAYER_DASH_COOLDOWN_MS   400
 
@@ -17,9 +19,12 @@
 
 #define GAME3_PLAYER_DAMAGE_COOLDOWN_MS 800
 #define GAME3_PLAYER_DAMAGE_FLASH_MS    250
-#define GAME3_PLAYER_START_HEALTH   3
-#define GAME3_PLAYER_START_ARMOUR   3
+#define GAME3_PLAYER_START_HEALTH       3
+#define GAME3_PLAYER_START_ARMOUR       3
 
+// COLLISION HELPERS
+
+// True if the pixel sits inside a solid tile or on the moving platform
 static uint8_t Game3_Player_Is_Solid_At_Pixel(int16_t px, int16_t py) {
     if (px < 0 || py < 0) {
         return 1;
@@ -35,7 +40,8 @@ static uint8_t Game3_Player_Is_Solid_At_Pixel(int16_t px, int16_t py) {
     return Game3_World_Pixel_Hits_Moving_Platform(px, py);
 }
 
-static uint8_t Game3_Player_Is_On_Ground(const Game3_Player *player) { 
+// Checks both bottom corners of the player so we don't fall off ledges by 1 px
+static uint8_t Game3_Player_Is_On_Ground(const Game3_Player *player) {
     int16_t foot_y = player->y + player->height; 
     int16_t left_x = player->x; 
     int16_t right_x = player->x + player->width - 1; 
@@ -43,7 +49,9 @@ static uint8_t Game3_Player_Is_On_Ground(const Game3_Player *player) {
     return Game3_Player_Is_Solid_At_Pixel(left_x, foot_y) || Game3_Player_Is_Solid_At_Pixel(right_x, foot_y);
 }
 
-void Game3_Player_Init(Game3_Player *player) { 
+// LIFECYCLE
+
+void Game3_Player_Init(Game3_Player *player) {
     player->width = 8; 
     player->height = 8; 
 
@@ -75,15 +83,19 @@ void Game3_Player_Init(Game3_Player *player) {
     player->damage_flash_end_time_ms = 0; 
 }
 
+// PER FRAME
+
 void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed, uint8_t dash_pressed, int16_t dash_dx, uint8_t attack_pressed, uint8_t attack_up_held) {
     uint32_t now = HAL_GetTick();
 
+    // Track facing only when actually moving, so idle keeps the last direction
     if (dx < 0) {
         player->facing_dx = -1;
     } else if (dx > 0) {
         player->facing_dx = 1;
     }
 
+    // Attack window opens for ATTACK_DURATION ms; up_held redirects the hitbox upward
     if (attack_pressed) {
         player->is_attacking = 1;
         player->attack_end_time_ms = now + GAME3_PLAYER_ATTACK_DURATION;
@@ -97,7 +109,8 @@ void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed,
 
     player->is_grounded = Game3_Player_Is_On_Ground(player);
 
-    if (dash_pressed && !player->is_dashing && (now - player->last_dash_time_ms >= GAME3_PLAYER_DASH_COOLDOWN_MS)) { 
+    // Dash: triggered by double-tap, has its own cooldown so the player can't spam it
+    if (dash_pressed && !player->is_dashing && (now - player->last_dash_time_ms >= GAME3_PLAYER_DASH_COOLDOWN_MS)) {
         player->is_dashing = 1; 
         player->dash_end_time_ms = now + GAME3_PLAYER_DASH_DURATION_MS; 
         player->last_dash_time_ms = now; 
@@ -124,7 +137,8 @@ void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed,
         player->x = GAME3_WORLD_WIDTH_PX - player->width; 
     }
 
-    if (jump_pressed && player->is_grounded && (now - player->last_jump_time_ms >= GAME3_PLAYER_JUMP_COOLDOWN_MS)) { 
+    // Only jump if grounded and the cooldown has expired
+    if (jump_pressed && player->is_grounded && (now - player->last_jump_time_ms >= GAME3_PLAYER_JUMP_COOLDOWN_MS)) {
         player->vy = GAME3_PLAYER_JUMP_VELOCITY; 
         player->is_grounded = 0; 
         player->last_jump_time_ms = now; 
@@ -140,7 +154,8 @@ void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed,
 
     player->y += player->vy;
 
-    if (player->vy >= 0) { 
+    // Falling or level: snap to the top of the landing tile
+    if (player->vy >= 0) {
         int16_t foot_y = player->y + player->height; 
         int16_t left_x = player->x; 
         int16_t right_x = player->x + player->width - 1; 
@@ -153,12 +168,13 @@ void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed,
         } else { 
             player->is_grounded = 0; 
         }
-    } else { 
-        int16_t head_y = player->y; 
-        int16_t left_x = player->x; 
-        int16_t right_x = player->x + player->width - 1; 
+    } else {
+        // Rising: bonk head and zero vy if we hit a ceiling
+        int16_t head_y = player->y;
+        int16_t left_x = player->x;
+        int16_t right_x = player->x + player->width - 1;
 
-        if (Game3_Player_Is_Solid_At_Pixel(left_x, head_y) || Game3_Player_Is_Solid_At_Pixel(right_x, head_y)) { 
+        if (Game3_Player_Is_Solid_At_Pixel(left_x, head_y) || Game3_Player_Is_Solid_At_Pixel(right_x, head_y)) {
             uint16_t ceiling_tile_y = (uint16_t)head_y / GAME3_TILE_SIZE; 
             player->y = ((int16_t)(ceiling_tile_y + 1) * GAME3_TILE_SIZE);
             player->vy = 0; 
@@ -174,10 +190,13 @@ void Game3_Player_Update(Game3_Player *player, int16_t dx, uint8_t jump_pressed,
     }
 }
 
-void Game3_Player_Take_Damage(Game3_Player *player, uint8_t amount) { 
-    uint32_t now = HAL_GetTick(); 
+// HEALTH AND ARMOUR
 
-    if ((now - player->last_damage_time_ms) < GAME3_PLAYER_DAMAGE_COOLDOWN_MS) { 
+void Game3_Player_Take_Damage(Game3_Player *player, uint8_t amount) {
+    uint32_t now = HAL_GetTick();
+
+    // I-frames: ignore damage for a window after the last hit
+    if ((now - player->last_damage_time_ms) < GAME3_PLAYER_DAMAGE_COOLDOWN_MS) {
         return; 
     }
 
@@ -185,7 +204,8 @@ void Game3_Player_Take_Damage(Game3_Player *player, uint8_t amount) {
         return;
     }
 
-    if (player->armour > 0) { 
+    // Armour soaks the hit first; only spill into health once armour is empty
+    if (player->armour > 0) {
         if (amount >= player->armour) { 
             player->armour = 0; 
         } else { 
@@ -223,6 +243,9 @@ uint8_t Game3_Player_Is_Attacking(const Game3_Player *player) {
     return player->is_attacking;
 }
 
+// ATTACK HITBOX
+
+// Hitbox sits above when up_held, otherwise on the side the player is facing
 void Game3_Player_Get_Attack_Hitbox(const Game3_Player *player, int16_t *out_x, int16_t *out_y) {
     int16_t attack_x;
     int16_t attack_y;
