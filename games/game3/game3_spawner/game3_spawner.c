@@ -5,9 +5,11 @@
 #include "game3_world.h"
 #include "stm32l4xx_hal.h"
 
-#define GAME3_SPAWNER_GRACE_PERIOD_MS   3000
-#define GAME3_SPAWNER_CONTINUOUS_INTERVAL_MS    2500
-#define GAME3_SPAWNER_MAX_TOTAL_ALIVE   8
+// TUNING
+
+#define GAME3_SPAWNER_GRACE_PERIOD_MS           3000     // No spawns for the first few seconds
+#define GAME3_SPAWNER_CONTINUOUS_INTERVAL_MS    2500     // Time between trickle spawns
+#define GAME3_SPAWNER_MAX_TOTAL_ALIVE           8        // Hard cap on alive enemies
 
 // Surge wave tuning
 #define GAME3_SPAWNER_SURGE_INTERVAL_MIN_MS 30000
@@ -32,6 +34,9 @@ typedef enum {
     GAME3_SPAWNER_TYPE_FLYING
 } Game3_Spawner_Type;
 
+// HELPERS
+
+// Random ms between MIN and MAX for the next surge
 static uint32_t Game3_Spawner_Random_Surge_Interval(void) {
     uint32_t span = GAME3_SPAWNER_SURGE_INTERVAL_MAX_MS - GAME3_SPAWNER_SURGE_INTERVAL_MIN_MS;
     return GAME3_SPAWNER_SURGE_INTERVAL_MIN_MS + (uint32_t)(rand() % (int)(span + 1));
@@ -61,6 +66,7 @@ static uint8_t Game3_Spawner_Count_Alive(const Game3_Enemy *basics, const Game3_
     return alive;
 }
 
+// Returns the first free slot in each enemy pool, or -1 if all are alive
 static int8_t Game3_Spawner_Find_Free_Basic(const Game3_Enemy *basics) {
     for (uint8_t i = 0; i < GAME3_MAX_BASIC_ENEMIES; i++) {
         if (!basics[i].is_alive) {
@@ -91,8 +97,7 @@ static int8_t Game3_Spawner_Find_Free_Flying(const Game3_FlyingEnemy *flyings) {
     return -1;
 }
 
-// Pick the world edge furthest from the player so enemies never appear on
-// top of them 
+// Pick the world edge furthest from the player so enemies don't spawn on top of them
 static int16_t Game3_Spawner_Pick_Edge_X(const Game3_Player *player, uint8_t enemy_width) {
     int16_t world_centre = GAME3_WORLD_WIDTH_PX / 2;
     int16_t player_centre = player->x + (player->width / 2);
@@ -104,7 +109,7 @@ static int16_t Game3_Spawner_Pick_Edge_X(const Game3_Player *player, uint8_t ene
     return 0;
 }
 
-// Returns how many enemy types are currently allowed
+// Difficulty ramp: chargers unlock after 60s, flyers after 120s
 static uint8_t Game3_Spawner_Unlocked_Type_Count(const Game3_Spawner *spawner) {
     uint32_t elapsed = HAL_GetTick() - spawner->game_start_time_ms;
 
@@ -163,6 +168,8 @@ static uint8_t Game3_Spawner_Spawn_One(Game3_Spawner_Type type, Game3_Enemy *bas
     return 0;
 }
 
+// LIFECYCLE
+
 void Game3_Spawner_Init(Game3_Spawner *spawner) {
     uint32_t now = HAL_GetTick();
     spawner->game_start_time_ms = now;
@@ -172,11 +179,14 @@ void Game3_Spawner_Init(Game3_Spawner *spawner) {
     spawner->next_surge_spawn_ms = 0;
 }
 
+// PER FRAME
+
 void Game3_Spawner_Update(Game3_Spawner *spawner, Game3_Enemy *basics, Game3_ChargerEnemy *chargers, Game3_FlyingEnemy *flyings, const Game3_Player *player, const Game3_Camera *camera) {
-    (void)camera; 
+    (void)camera;       // currently unused, kept for future camera-aware spawning
 
     uint32_t now = HAL_GetTick();
 
+    // Grace period at start: no spawns at all
     if (now < (spawner->game_start_time_ms + GAME3_SPAWNER_GRACE_PERIOD_MS)) {
         return;
     }

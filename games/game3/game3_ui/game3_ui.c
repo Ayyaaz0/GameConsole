@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <string.h>
 
+// HUD LAYOUT
+
 #define GAME3_UI_HEART_START_X      14
 #define GAME3_UI_HEART_Y            14
 #define GAME3_UI_HEART_RADIUS       5
@@ -30,11 +32,15 @@
 #define GAME3_UI_ABILITY_FILL_COLOUR    14
 #define GAME3_UI_ABILITY_BORDER_COLOUR  1
 
-static uint16_t Game3_UI_Get_Text_Width(const char *text, uint8_t font_size) { 
-    return (uint16_t)(strlen(text) * 6 * font_size); 
+// TEXT MEASURING
+
+// Each character is 6 px wide at scale 1, so width scales linearly with font_size
+static uint16_t Game3_UI_Get_Text_Width(const char *text, uint8_t font_size) {
+    return (uint16_t)(strlen(text) * 6 * font_size);
 }
 
-static uint16_t Game3_UI_Get_Centred_X(const char *text, uint8_t font_size) { 
+// Returns the x for centring the given text on the screen
+static uint16_t Game3_UI_Get_Centred_X(const char *text, uint8_t font_size) {
     uint16_t width = Game3_UI_Get_Text_Width(text, font_size); 
 
     if (width >= GAME3_UI_SCREEN_WIDTH) { 
@@ -44,7 +50,10 @@ static uint16_t Game3_UI_Get_Centred_X(const char *text, uint8_t font_size) {
     return (GAME3_UI_SCREEN_WIDTH - width) / 2; 
 }
 
-static void Game3_UI_Draw_Health(const Game3_Hud *hud) { 
+// HEALTH, ARMOUR, ABILITY METER
+
+// Filled circle for current hearts, hollow ring for missing ones
+static void Game3_UI_Draw_Health(const Game3_Hud *hud) {
     for (uint8_t i = 0; i < hud->max_health; i++) { 
         uint16_t x = GAME3_UI_HEART_START_X + (i * GAME3_UI_HEART_SPACING); 
 
@@ -66,7 +75,10 @@ static void Game3_UI_Draw_Armour(const Game3_Hud *hud) {
     }
 }
 
-static void Game3_UI_Draw_Time_And_Score(const Game3_Hud *hud) { 
+// SCORE AND GAME OVER
+
+// Score is just elapsed seconds * 10
+static void Game3_UI_Draw_Time_And_Score(const Game3_Hud *hud) {
     char buffer[32]; 
     uint32_t elapsed_seconds = (HAL_GetTick() - hud->start_time_ms) / 1000;
     uint32_t score = elapsed_seconds * 10; 
@@ -85,7 +97,8 @@ void Game3_UI_Draw_Game_Over(const Game3_Hud *hud) {
     LCD_printString(score_text, Game3_UI_Get_Centred_X(score_text, 2), 125, 1, 2);
 }
 
-static void Game3_UI_Draw_Ability_Meter(const Game3_Hud *hud) { 
+// Background, fill, then border on top so the outline is always visible
+static void Game3_UI_Draw_Ability_Meter(const Game3_Hud *hud) {
     uint8_t ability_fill_width = 0; 
 
     if (hud->max_ability > 0) { 
@@ -101,7 +114,9 @@ static void Game3_UI_Draw_Ability_Meter(const Game3_Hud *hud) {
     LCD_Draw_Rect(GAME3_UI_ABILITY_X, GAME3_UI_ABILITY_Y + 10, GAME3_UI_ABILITY_WIDTH, GAME3_UI_ABILITY_HEIGHT, GAME3_UI_ABILITY_BORDER_COLOUR, 0);
 }
 
-void Game3_UI_Draw(const Game3_Hud *hud) { 
+// PUBLIC ENTRY POINTS
+
+void Game3_UI_Draw(const Game3_Hud *hud) {
     Game3_UI_Draw_Health(hud);
     Game3_UI_Draw_Armour(hud);
     Game3_UI_Draw_Time_And_Score(hud);
