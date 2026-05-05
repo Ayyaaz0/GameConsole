@@ -1,15 +1,20 @@
 #include "game3_world.h"
 #include <stdint.h>
 
-#define GAME3_MOVING_PLATFORM_WIDTH   32
-#define GAME3_MOVING_PLATFORM_HEIGHT  GAME3_TILE_SIZE
-#define GAME3_MOVING_PLATFORM_SPEED   1
-#define GAME3_MOVING_PLATFORM_ROW     19
-#define GAME3_MOVING_PLATFORM_MIN_TILE_X  10
-#define GAME3_MOVING_PLATFORM_MAX_TILE_X  20  /* rightmost tile column the platform's left edge may reach */
+// MOVING PLATFORM TUNING
 
+#define GAME3_MOVING_PLATFORM_WIDTH       32
+#define GAME3_MOVING_PLATFORM_HEIGHT      GAME3_TILE_SIZE
+#define GAME3_MOVING_PLATFORM_SPEED       1
+#define GAME3_MOVING_PLATFORM_ROW         19
+#define GAME3_MOVING_PLATFORM_MIN_TILE_X  10
+#define GAME3_MOVING_PLATFORM_MAX_TILE_X  20    // rightmost column the platform's left edge can reach
+
+// 2D grid of tile types, plus the single moving platform
 static uint8_t room_map[GAME3_ROOM_HEIGHT][GAME3_ROOM_WIDTH];
 static Game3_MovingPlatform moving_platform;
+
+// ROOM SETUP
 
 static void Game3_World_ClearRoom(void) {
     for (uint16_t y = 0; y < GAME3_ROOM_HEIGHT; y++) {
@@ -60,11 +65,14 @@ void Game3_World_Init(void) {
     Game3_World_Init_MovingPlatform();
 }
 
+// PER FRAME
+
 void Game3_World_Update(void) {
     int16_t old_x = moving_platform.x;
 
     moving_platform.x += (int16_t)moving_platform.direction * GAME3_MOVING_PLATFORM_SPEED;
 
+    // Bounce at either end and flip direction
     if (moving_platform.x >= moving_platform.max_x) {
         moving_platform.x = moving_platform.max_x;
         moving_platform.direction = -1;
@@ -73,8 +81,11 @@ void Game3_World_Update(void) {
         moving_platform.direction = 1;
     }
 
+    // dx is how far the platform moved this frame; the player uses it to ride along
     moving_platform.dx = moving_platform.x - old_x;
 }
+
+// TILE QUERIES
 
 uint8_t Game3_World_Get_Tile(uint16_t tile_x, uint16_t tile_y) {
     if (tile_x >= GAME3_ROOM_WIDTH || tile_y >= GAME3_ROOM_HEIGHT) {
@@ -96,6 +107,8 @@ uint8_t Game3_World_Is_Solid(uint16_t tile_x, uint16_t tile_y) {
     return Game3_World_Get_Tile(tile_x, tile_y) == GAME3_TILE_SOLID;
 }
 
+// MOVING PLATFORM QUERIES
+
 const Game3_MovingPlatform* Game3_World_Get_Moving_Platform(void) {
     return &moving_platform;
 }
@@ -108,6 +121,7 @@ uint8_t Game3_World_Pixel_Hits_Moving_Platform(int16_t px, int16_t py) {
     return 1;
 }
 
+// True if the box's bottom edge sits exactly on the platform top AND overlaps in x
 uint8_t Game3_World_Box_Is_On_Moving_Platform(int16_t x, int16_t y, uint8_t width, uint8_t height) {
     if ((int16_t)(y + height) != moving_platform.y) return 0;
 
