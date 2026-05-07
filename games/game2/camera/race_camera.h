@@ -1,19 +1,16 @@
 #ifndef RACE_CAMERA_H
 #define RACE_CAMERA_H
 
-#include <stdbool.h>
-
 #include "../car/race_car.h"
 #include "../track/race_track.h"
 
-typedef struct {
+#include <stdbool.h>
 
+typedef struct {
   float x;
   float y;
-
-  float target_x;
-  float target_y;
-
+  float target_screen_x;
+  float target_screen_y;
   float smoothing;
   bool active;
 } RaceCamera;
